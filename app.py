@@ -10,7 +10,7 @@ st.set_page_config(page_title="Rifa Rodrigo 2026", layout="centered")
 ID_DE_TU_ARCHIVO ='1UXXSDdQCZ9jwYBByHJCxos7Z3QI-EDd1'
 URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_DE_TU_ARCHIVO}/export?format=xlsx'
 
-@st.cache_data(ttl=300)  # Se actualiza cada 5 minutos automáticamente
+@st.cache_data(ttl=30)  # Se actualiza cada 5 minutos automáticamente
 def cargar_datos():
     return pd.read_excel(URL_DRIVE, sheet_name="Registro", engine='openpyxl')
 
