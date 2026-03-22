@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 st.set_page_config(page_title="Rifa Rodrigo 2026", layout="centered")
 
 # --- REEMPLAZA ESTO CON TU ID ---
-ID_DE_TU_ARCHIVO = 'https://docs.google.com/spreadsheets/d/1UXXSDdQCZ9jwYBByHJCxos7Z3QI-EDd1/edit?usp=sharing&ouid=114476754872101123912&rtpof=true&sd=true'
+ID_DE_TU_ARCHIVO ='https://docs.google.com/spreadsheets/d/1UXXSDdQCZ9jwYBByHJCxos7Z3QI-EDd1/edit?usp=sharing&ouid=114476754872101123912&rtpof=true&sd=true'
 URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_DE_TU_ARCHIVO}/export?format=xlsx'
 
 @st.cache_data(ttl=300)  # Se actualiza cada 5 minutos automáticamente
