@@ -14,7 +14,7 @@ URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_DE_TU_ARCHIVO}/export?f
 def cargar_datos():
     return pd.read_excel(URL_DRIVE, sheet_name="Registro", engine='openpyxl')
 
-st.title("🎟️ BOLETOS RIFA 27/03/2026")
+st.title("🎟️ BOLETOS RIFA 🎟️ ")
 
 try:
     df_full = cargar_datos()
