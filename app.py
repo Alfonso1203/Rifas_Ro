@@ -60,7 +60,7 @@ try:
     st.info("""
     **🏦 DATOS DE PAGO:**
     - **Banco:** Banamex
-    - **Cuenta:** XXXXXX
+    - **Cuenta:** 002180702288920746
     - **Tipo:** Débito
     - **Nombre:** Rodrigo Antimo Mora
     """)
