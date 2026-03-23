@@ -55,7 +55,17 @@ try:
 
     ax.set_xlim(-0.5, 15); ax.set_ylim(-filas - 1.5, 1); ax.axis('off')
     st.pyplot(fig)
+    
+# ... (aquí termina lo del mapa)
+    ax.set_xlim(-0.5, 15); ax.set_ylim(-filas - 1.5, 1); ax.axis('off')
+    st.pyplot(fig)
 
+    # --- NUEVA LEYENDA DEBAJO DEL MAPA ---
+    st.markdown("<p style='text-align: center; color: gray;'><i>Una vez hecho tu pago, tus boletos se verán reflejados en unos minutos ⏳</i></p>", unsafe_allow_html=True)
+    
+    st.write("---") # Línea divisora
+    # ... (aquí siguen las columnas de pago y WhatsApp)
+    
 # --- SECCIÓN DE PAGO Y CONTACTO ---
     st.write("---") # Línea divisora
     
