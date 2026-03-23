@@ -56,15 +56,36 @@ try:
     ax.set_xlim(-0.5, 15); ax.set_ylim(-filas - 1.5, 1); ax.axis('off')
     st.pyplot(fig)
 
-    # --- DATOS BANCARIOS ---
-    st.info("""
-    **🏦 DATOS DE PAGO:**
-    - **Banco:** Banamex
-    - **Cuenta:** 002180702288920746
-    - **Tipo:** Débito
-    - **Nombre:** Rodrigo Antimo Mora
+# --- SECCIÓN DE PAGO Y CONTACTO ---
+    st.write("---") # Línea divisora
+    
+    # Creamos dos columnas (50% de ancho cada una)
+    col1, col2 = st.columns(2)
+    
+# --- RECORDATORIO FINAL ---
+    st.write("") # Un pequeño espacio en blanco
+    st.warning("""
+    ### 📸 ¡RECUERDA TU COMPROBANTE!
+    Es muy importante que nos mandes una **foto o captura de tu comprobante de pago** por WhatsApp para poder registrar tus boletos oficialmente. 🎟️✨
     """)
+    with col1:
+        st.info("""
+        **🏦 DATOS DE PAGO:**
+        - **Banco:** Banamex
+        - **Cuenta:** 002180702288920746
+        - **Tipo:** Débito
+        - **Nombre:** Rodrigo Antimo Mora
+        """)
 
+    with col2:
+        # Configura tu número de WhatsApp aquí (sin espacios ni el +)
+        numero_tel = "525542006418" 
+        mensaje_wa = "¡Hola Rodrigo! Vi el mapa de la rifa y quiero apartar un boleto."
+        link_wa = f"https://wa.me/{numero_tel}?text={mensaje_wa.replace(' ', '%20')}"
+        
+        st.success("**💬 ¿LISTO PARA APARTAR?**")
+        st.markdown("### Apartar mi boleto")
+        st.link_button("Click aquí para ir a WhatsApp", link_wa, use_container_width=True)
 except Exception as e:
     st.warning("Estamos actualizando el mapa con los últimos boletos. Vuelve a cargar en un momento.")
     # st.error(e) # Solo para pruebas
