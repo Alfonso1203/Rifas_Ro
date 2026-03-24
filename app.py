@@ -8,7 +8,7 @@ st.set_page_config(page_title="Rifa Rodrigo 2026", layout="centered")
 
 # --- 2. CONFIGURACIÓN DE DATOS (GOOGLE DRIVE) ---
 # Tu ID de archivo ya está integrado
-ID_DE_TU_ARCHIVO = '1UXXSDdQCZ9jwYBByHJCxos7Z3QI-EDd1'
+ID_DE_TU_ARCHIVO = '1lJKiR8B8_DbhTFVXXxdVoexMZ6pS3y6w'
 URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_DE_TU_ARCHIVO}/export?format=xlsx'
 
 # Tiempo de actualización: 30 segundos
