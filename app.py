@@ -62,7 +62,7 @@ try:
     ax.set_xlim(-0.5, 15); ax.set_ylim(-filas - 0.5, 1); ax.axis('off')
     st.pyplot(fig)
 
-    st.markdown("<p style='text-align: center; color: gray; font-size: 0.8rem;'>Actualización automática cada 15 seg ⏳</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: gray; font-size: 0.8rem;'>El mapa se tarda unos minutos en actualizarse ⏳</p>", unsafe_allow_html=True)
     
     st.write("---")
     
@@ -77,7 +77,7 @@ try:
     # --- 6. BOTÓN WHATSAPP ---
     # REEMPLAZA LAS X CON TU NÚMERO
     numero_wa = "5542006418" 
-    wa_link = f"https://wa.me/{numero_wa}?text=Hola%20Rodrigo,%20ya%20realicé%20mi%20pago%20de%20la%20rifa."
+    wa_link = f"https://wa.me/{numero_wa}?text=Hola%Rifalosgueros,%20ya%20realicé%20mi%20pago%20de%20la%20rifa."
     st.link_button("¿LISTO PARA APARTAR? 📱", wa_link, use_container_width=True)
 
     # --- 7. MENSAJE FINAL (Imagen f5df5a) ---
