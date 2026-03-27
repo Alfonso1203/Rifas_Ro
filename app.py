@@ -79,4 +79,18 @@ try:
         # Pon tu número real aquí abajo
         numero_tel = "52XXXXXXXXXX" 
         mensaje_wa = "¡Hola Rodrigo! Ya realicé mi pago. Aquí te mando mi comprobante para registrar mis boletos."
-        link_wa = f"https://wa.me/{numero_tel}?text={mensaje_
+        link_wa = f"https://wa.me/{numero_tel}?text={mensaje_wa.replace(' ', '%20')}"
+        
+        st.success("**💬 ¿LISTO PARA APARTAR?**")
+        st.markdown("### Apartar mi boleto")
+        st.link_button("Click aquí para ir a WhatsApp 📱", link_wa, use_container_width=True)
+
+    # --- 7. RECORDATORIO FINAL ---
+    st.write("") 
+    st.warning("""
+    ### 📸 ¡RECUERDA TU COMPROBANTE!
+    Es muy importante que nos mandes una **foto o captura de tu comprobante de pago** por WhatsApp para poder registrar tus boletos oficialmente. 🎟️✨
+    """)
+
+except Exception as e:
+    st.warning("Estamos actualizando el mapa con los últimos boletos. Vuelve a cargar en un momento.")
