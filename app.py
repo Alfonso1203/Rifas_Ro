@@ -77,7 +77,7 @@ try:
 
     with col2:
         # Pon tu número real aquí abajo
-        numero_tel = "52XXXXXXXXXX" 
+        numero_tel = "5542006418" 
         mensaje_wa = "¡Hola Rodrigo! Ya realicé mi pago. Aquí te mando mi comprobante para registrar mis boletos."
         link_wa = f"https://wa.me/{numero_tel}?text={mensaje_wa.replace(' ', '%20')}"
         
