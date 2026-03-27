@@ -7,13 +7,12 @@ import matplotlib.pyplot as plt
 st.set_page_config(page_title="Rifa Rodrigo 2026", layout="centered")
 
 # --- 2. CONEXIÓN AL EXCEL DE DRIVE ---
-# Usamos el ID que me pasaste para exportar el archivo como Excel directamente
 ID_ARCHIVO = "1lJKiR8B8_DbhTFVXXxdVoexMZ6pS3y6w"
 URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_ARCHIVO}/export?format=xlsx'
 
-@st.cache_data(ttl=30) # Se actualiza automáticamente cada 30 segundos
+@st.cache_data(ttl=15) # Actualización rápida cada 15 segundos
 def cargar_datos():
-    # Leemos la pestaña 'Registro' saltando las primeras 6 filas de encabezado/botones
+    # Saltamos 6 filas para empezar en los encabezados reales (Fila 7)
     df = pd.read_excel(URL_DRIVE, sheet_name="Registro", skiprows=6, engine='openpyxl')
     return df
 
@@ -21,25 +20,22 @@ st.title("🎟️ BOLETOS RIFA 27/03/2026 🎟️")
 
 try:
     df_full = cargar_datos()
-    N = 100 # Total de boletos
+    N = 100 
     info_boletos = {}
     
-    # --- 3. PROCESAR INFORMACIÓN ---
+    # --- 3. PROCESAR COLORES (Lógica corregida) ---
     for _, row in df_full.iterrows():
         try:
-            # Columna D (índice 3): Donde están tus números seleccionados (pueden ser varios separados por coma)
-            if pd.notna(row.iloc[3]): 
-                nums = str(row.iloc[3]).replace(" ", "").split(',')
-                nombre = str(row.iloc[0])   # Columna A: Nombre
-                apellido = str(row.iloc[1]) # Columna B: Apellido
-                estado = str(row.iloc[4]).strip().lower() # Columna E: Estatus (pagado/pendiente)
+            # Columna E (índice 4): Números seleccionados
+            # Columna F (índice 5): Estatus
+            if pd.notna(row.iloc[4]): 
+                nums = str(row.iloc[4]).replace(" ", "").split(',')
+                estado = str(row.iloc[5]).strip().lower() 
                 
                 for n in nums:
                     if n:
                         num_int = int(float(n))
-                        info_boletos[num_int] = {
-                            "nombre": nombre, "apellido": apellido, "estado": estado
-                        }
+                        info_boletos[num_int] = estado
         except:
             continue
 
@@ -50,38 +46,26 @@ try:
     
     for i in range(1, N + 1):
         f, c = (i - 1) // columnas, (i - 1) % columnas
-        color, txt_c = 'white', 'black' # Predeterminado: Disponible
+        color, txt_c = 'white', 'black' # Disponible
         
-        info = info_boletos.get(i, {"estado": ""})
-        # Reglas de color según el estatus
-        if 'pagado' in info["estado"]:
-            color, txt_c = '#28a745', 'white' # Verde
-        elif 'pendiente' in info["estado"]:
-            color, txt_c = '#ffc107', 'black' # Amarillo
+        estado = info_boletos.get(i, "")
+        
+        if 'pagado' in estado:
+            color, txt_c = '#28a745', 'white' # Verde fuerte para pagados
+        elif 'pendiente' in estado:
+            color, txt_c = '#ffc107', 'black' # Amarillo para pendientes
         
         ax.add_patch(plt.Rectangle((c, -f), 0.9, 0.8, facecolor=color, edgecolor='#bcbcbc', linewidth=0.5))
         ax.text(c + 0.45, -f + 0.4, str(i), ha='center', va='center', fontsize=8, fontweight='bold', color=txt_c)
 
     ax.set_xlim(-0.5, 15); ax.set_ylim(-filas - 0.5, 1); ax.axis('off')
-    
-    # Mostramos el mapa
     st.pyplot(fig)
 
-    # --- 5. LEYENDA Y BUSCADOR ---
-    st.markdown("<p style='text-align: center; color: gray;'><i>Actualización automática cada 30 seg ⏳</i></p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: gray;'><i>Actualización automática cada 15 seg ⏳</i></p>", unsafe_allow_html=True)
     
-    st.markdown("### 🔍 Consultar boleto")
-    num_buscado = st.number_input("Digita el número de boleto a consultar:", min_value=1, max_value=N, step=1)
-    
-    if num_buscado in info_boletos:
-        b = info_boletos[num_buscado]
-        st.success(f"👤 **Dueño:** {b['nombre']} {b['apellido']}  \n📌 **Estatus:** {b['estado'].capitalize()}")
-    else:
-        st.info("✨ Este boleto está **Disponible**")
-
     st.write("---")
     
-    # --- 6. DATOS DE PAGO Y WHATSAPP ---
+    # --- 5. DATOS DE PAGO Y BOTÓN ---
     c1, c2 = st.columns(2)
     with c1:
         st.info("""
@@ -91,12 +75,10 @@ try:
         - Rodrigo Antimo Mora
         """)
     with c2:
-        # ¡IMPORTANTE: Pon tu número real aquí abajo!
-        numero_whatsapp = "5542006418" 
-        wa_link = f"https://wa.me/{numero_whatsapp}?text=Hola%20Rodrigo,%20quiero%20el%20boleto%20numero..."
-        st.link_button("Apartar por WhatsApp 📱", wa_link, use_container_width=True)
+        wa_link = "https://wa.me/5542006418?text=Hola%20Rodrigo,%20quiero%20apartar%20un%20boleto"
+        st.link_button("¿LISTO PARA APARTAR? 📱", wa_link, use_container_width=True)
 
-    st.warning("### 📸 ¡RECUERDA TU COMPROBANTE! ✨")
+    st.warning("### 📸 ¡RECUERDA ENVIAR TU COMPROBANTE! ✨")
 
 except Exception as e:
-    st.error("Error al conectar con tu Google Sheet. Asegúrate de que el archivo esté compartido como 'Cualquier persona con el enlace'.")
+    st.error("Error al cargar datos. Verifica que el Excel esté compartido como 'Cualquier persona con el enlace'.")
