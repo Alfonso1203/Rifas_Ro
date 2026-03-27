@@ -6,108 +6,87 @@ import matplotlib.pyplot as plt
 # --- 1. CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Rifa Rodrigo 2026", layout="centered")
 
-# --- 2. CONFIGURACIÓN DE DATOS (GOOGLE DRIVE) ---
-# Tu ID de archivo ya está integrado
-ID_DE_TU_ARCHIVO = '1lJKiR8B8_DbhTFVXXxdVoexMZ6pS3y6w'
-URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_DE_TU_ARCHIVO}/export?format=xlsx'
+# --- 2. CONEXIÓN AL EXCEL DE DRIVE ---
+ID_ARCHIVO = "1lJKiR8B8_DbhTFVXXxdVoexMZ6pS3y6w"
+URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_ARCHIVO}/export?format=xlsx'
 
-# Tiempo de actualización: 30 segundos
-@st.cache_data(ttl=30)  
+@st.cache_data(ttl=30) # Se actualiza cada 30 segundos
 def cargar_datos():
-    return pd.read_excel(URL_DRIVE, sheet_name="Registro", engine='openpyxl')
+    # Saltamos 6 filas para llegar a los datos reales (Nombre en Col A, Apellido Col B, etc.)
+    return pd.read_excel(URL_DRIVE, sheet_name="Registro", skiprows=6, engine='openpyxl')
 
-# --- 3. TÍTULO ---
 st.title("🎟️ BOLETOS RIFA 27/03/2026 🎟️")
 
 try:
-    df_full = cargar_datos()
+    df = cargar_datos()
+    N = 100 # Total de boletos
+    info_boletos = {}
     
-    # Obtener el total de boletos (N) de la celda U3
-    N = int(df_full.iloc[2, 20]) if pd.notna(df_full.iloc[2, 20]) else 100
-    
-    # Datos de los boletos empiezan en la fila 7
-    df = df_full.iloc[6:].copy()
-    
-    # Diccionario para rastrear el estado de cada número
-    estatus_boletos = {}
+    # --- 3. PROCESAR INFORMACIÓN ---
     for _, row in df.iterrows():
-        if pd.notna(row.iloc[3]): # Columna D (Números)
-            nums = str(row.iloc[3]).replace(" ", "").split(',')
-            estado = str(row.iloc[4]).strip().lower() # Columna E (Estatus)
-            for n in nums:
-                try:
-                    num_int = int(float(n))
-                    estatus_boletos[num_int] = estado
-                except:
-                    continue
+        try:
+            # Columna D (índice 3): Números seleccionados
+            if pd.notna(row.iloc[3]): 
+                nums = str(row.iloc[3]).replace(" ", "").split(',')
+                nombre = str(row.iloc[0])   # Columna A
+                apellido = str(row.iloc[1]) # Columna B
+                estado = str(row.iloc[4]).strip().lower() # Columna E (Estatus)
+                
+                for n in nums:
+                    if n:
+                        num_int = int(float(n))
+                        info_boletos[num_int] = {
+                            "nombre": nombre, "apellido": apellido, "estado": estado
+                        }
+        except:
+            continue
 
-    # --- 4. CREACIÓN DEL MAPA VISUAL ---
+    # --- 4. DIBUJAR EL MAPA ---
     columnas = 15
     filas = int(np.ceil(N / columnas))
-    fig, ax = plt.subplots(figsize=(12, filas * 0.7 + 2))
-    fig.patch.set_facecolor('white')
+    fig, ax = plt.subplots(figsize=(10, filas * 0.7 + 1))
     
     for i in range(1, N + 1):
         f, c = (i - 1) // columnas, (i - 1) % columnas
-        color, txt_c = 'white', 'black' # Por defecto: Disponible
+        color, txt_c = 'white', 'black'
         
-        est = estatus_boletos.get(i, "")
-        if 'pagado' in est:
+        info = info_boletos.get(i, {"estado": ""})
+        if 'pagado' in info["estado"]:
             color, txt_c = '#28a745', 'white' # Verde
-        elif 'pendiente' in est:
+        elif 'pendiente' in info["estado"]:
             color, txt_c = '#ffc107', 'black' # Amarillo
         
-        # Dibujar cuadro
-        ax.add_patch(plt.Rectangle((c, -f), 0.9, 0.8, facecolor=color, edgecolor='#333333', linewidth=0.5))
-        # Poner número
+        ax.add_patch(plt.Rectangle((c, -f), 0.9, 0.8, facecolor=color, edgecolor='#bcbcbc', linewidth=0.5))
         ax.text(c + 0.45, -f + 0.4, str(i), ha='center', va='center', fontsize=8, fontweight='bold', color=txt_c)
 
-    # Leyenda del mapa
-    y_l = -filas - 0.5
-    ax.plot(2, y_l, 'o', color='#28a745', markersize=10); ax.text(2.6, y_l - 0.1, 'Pagado', fontsize=10, fontweight='bold')
-    ax.plot(6, y_l, 'o', color='#ffc107', markersize=10); ax.text(6.6, y_l - 0.1, 'Pendiente', fontsize=10, fontweight='bold')
-    ax.plot(10, y_l, 'o', color='white', markeredgecolor='black', markersize=10); ax.text(10.6, y_l - 0.1, 'Disponible', fontsize=10, fontweight='bold')
-
-    ax.set_xlim(-0.5, 15)
-    ax.set_ylim(-filas - 1.5, 1)
-    ax.axis('off')
-    
-    # Mostrar el mapa (SOLO UNA VEZ)
+    ax.set_xlim(-0.5, 15); ax.set_ylim(-filas - 0.5, 1); ax.axis('off')
     st.pyplot(fig)
 
-    # --- 5. LEYENDA DE ESPERA ---
-    st.markdown("<p style='text-align: center; color: gray;'><i>Una vez hecho tu pago, tus boletos se verán reflejados en unos minutos ⏳</i></p>", unsafe_allow_html=True)
+    # --- 5. INTERACTIVIDAD Y LEYENDA ---
+    st.markdown("<p style='text-align: center; color: gray;'><i>Actualización automática desde Excel cada 30 seg ⏳</i></p>", unsafe_allow_html=True)
     
+    st.markdown("### 🔍 Consultar dueño de boleto")
+    num_buscado = st.number_input("Digita el número de boleto:", min_value=1, max_value=N, step=1)
+    
+    if num_buscado in info_boletos:
+        b = info_boletos[num_buscado]
+        st.success(f"👤 **Dueño:** {b['nombre']} {b['apellido']}  \n📌 **Estatus:** {b['estado'].capitalize()}")
+    else:
+        st.info("✨ Este boleto está **Disponible**")
+
     st.write("---")
+    
+    # --- 6. DATOS DE PAGO Y WHATSAPP ---
+    c1, c2 = st.columns(2)
+    with c1:
+        st.info("**🏦 DATOS DE PAGO:**\n- Banamex\n- Cuenta: 002180702288920746\n- Rodrigo Antimo Mora")
+    with c2:
+        # ¡IMPORTANTE: Pon tu número real aquí!
+        numero_wa = "52XXXXXXXXXX" 
+        wa_link = f"https://wa.me/{numero_wa}?text=Hola%20Rodrigo,%20quiero%20el%20boleto%20numero..."
+        st.link_button("Apartar por WhatsApp 📱", wa_link, use_container_width=True)
 
-    # --- 6. SECCIÓN DE PAGO Y CONTACTO (COLUMNAS) ---
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.info("""
-        **🏦 DATOS DE PAGO:**
-        - **Banco:** Banamex
-        - **Cuenta:** 002180702288920746
-        - **Tipo:** Débito
-        - **Nombre:** Rodrigo Antimo Mora
-        """)
-
-    with col2:
-        # Reemplaza el número abajo con el tuyo real
-        numero_tel = "525542006418" 
-        mensaje_wa = "¡Hola Rodrigo! Ya realicé mi pago. Aquí te mando mi comprobante para registrar mis boletos."
-        link_wa = f"https://wa.me/{numero_tel}?text={mensaje_wa.replace(' ', '%20')}"
-        
-        st.success("**💬 ¿LISTO PARA APARTAR?**")
-        st.markdown("### Apartar mi boleto")
-        st.link_button("Click aquí para ir a WhatsApp 📱", link_wa, use_container_width=True)
-
-    # --- 7. RECORDATORIO FINAL ---
-    st.write("") 
-    st.warning("""
-    ### 📸 ¡RECUERDA TU COMPROBANTE!
-    Es muy importante que nos mandes una **foto o captura de tu comprobante de pago** por WhatsApp para poder registrar tus boletos oficialmente. 🎟️✨
-    """)
+    st.warning("### 📸 ¡RECUERDA TU COMPROBANTE! ✨")
 
 except Exception as e:
-    st.warning("Estamos actualizando el mapa con los últimos boletos. Vuelve a cargar en un momento.")
+    st.error("Error al conectar con el Excel. Revisa que el archivo en Drive esté compartido como 'Cualquier persona con el enlace'.")
