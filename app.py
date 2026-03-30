@@ -13,7 +13,7 @@ URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_ARCHIVO}/export?format=
 
 @st.cache_data(ttl=2)
 def cargar_datos(url):
-    # Leemos desde la fila donde empiezan los datos reales
+    # Saltamos las filas hasta llegar a los datos (según captura ea0c10)
     df = pd.read_excel(url, sheet_name="Registro", skiprows=2, engine='openpyxl')
     return df
 
@@ -24,22 +24,25 @@ try:
     N = 100 
     info_boletos = {}
     
-    # --- 2. LÓGICA DE PINTADO (COLUMNA D Y F) ---
+    # --- 2. LÓGICA DE PINTADO REFORZADA ---
     for _, row in df.iterrows():
         try:
-            # Columna D (3): Numero seleccionado | Columna F (5): Estatus
-            val_num = str(row.iloc[3]) if pd.notna(row.iloc[3]) else ""
+            # Columna D (índice 3): Numero seleccionado
+            # Columna F (índice 5): Estatus
+            celda_nums = str(row.iloc[3]) if pd.notna(row.iloc[3]) else ""
             val_estatus = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
 
-            if val_num and val_num != 'nan':
-                # Limpieza total de caracteres no numéricos excepto comas
-                numeros = val_num.replace(" ", "").split(',')
-                for n in numeros:
-                    if n:
-                        # Convertir a entero limpio (ej. 1.0 -> 1)
-                        num_id = int(float(n))
-                        if 1 <= num_id <= N:
-                            info_boletos[num_id] = val_estatus
+            if celda_nums and celda_nums != 'nan':
+                # Limpiamos espacios y separamos por comas
+                partes = celda_nums.replace(" ", "").split(',')
+                for p in partes:
+                    if p:
+                        # Extraemos solo los dígitos por si hay texto accidental
+                        num_solo = "".join(filter(str.isdigit, p.split('.')[0]))
+                        if num_solo:
+                            num_id = int(num_solo)
+                            if 1 <= num_id <= N:
+                                info_boletos[num_id] = val_estatus
         except:
             continue
 
@@ -55,9 +58,9 @@ try:
         estado = info_boletos.get(i, "")
         
         if "pagado" in estado:
-            color, txt_c = '#28a745', 'white' 
+            color, txt_c = '#28a745', 'white' # VERDE
         elif "pendiente" in estado:
-            color, txt_c = '#ffc107', 'black' 
+            color, txt_c = '#ffc107', 'black' # AMARILLO
         
         ax.add_patch(plt.Rectangle((c, -f), 0.9, 0.8, facecolor=color, edgecolor='#bcbcbc', linewidth=0.5))
         ax.text(c + 0.45, -f + 0.4, str(i), ha='center', va='center', fontsize=8, fontweight='bold', color=txt_c)
@@ -67,18 +70,18 @@ try:
 
     # --- 4. LEYENDA (SOLO PELOTITAS) ---
     st.markdown("""
-        <div style="text-align: center; font-size: 0.9rem; line-height: 1.6; border: 1px solid #ddd; padding: 10px; border-radius: 10px;">
+        <div style="text-align: center; font-size: 0.9rem; border: 1px solid #ddd; padding: 10px; border-radius: 10px;">
             <span style="color: #28a745; font-size: 1.2rem;">●</span> <b>Pagado</b> | 
             <span style="color: #ffc107; font-size: 1.2rem;">●</span> <b>Pendiente</b> | 
             <span style="color: #bcbcbc; font-size: 1.2rem;">○</span> <b>Disponible</b><br>
-            <b style="font-size: 1.1rem;">Precio de Boleto: $170</b><br>
+            <b>Precio de Boleto: $170</b><br>
             <i style="color: gray;">El mapa se tarda unos minutos en actualizarse ⌛</i>
         </div>
     """, unsafe_allow_html=True)
     
     st.write("---")
     
-    # --- 5. PAGOS Y BOTÓN (LETRAS BLANCAS) ---
+    # --- 5. PAGOS Y WHATSAPP (LETRAS BLANCAS) ---
     st.markdown("### 🏦 DATOS DE PAGO:")
     st.info("- **Banco:** Banamex\n- **Cuenta:** 002180702288920746\n- **Nombre:** Rodrigo Antimo Mora")
 
@@ -93,4 +96,4 @@ try:
     st.error("❗ UNA VEZ REALIZADO TU PAGO, TIENES 24 HRS PARA MANDAR TU COMPROBANTE, DE LO CONTRARIO EL NÚMERO SE LIBERARÁ.")
 
 except Exception as e:
-    st.error(f"Error al cargar el mapa. Verifica que el Excel en Drive tenga datos en la columna D y F.")
+    st.error(f"Error: {e}")
