@@ -8,17 +8,18 @@ import urllib.parse
 # --- 1. CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Rifa Los Güeros", layout="centered", page_icon="🎟️")
 
-# --- 2. CONEXIÓN AL EXCEL (FORZAR ACTUALIZACIÓN) ---
+# --- 2. CONEXIÓN AL EXCEL (CON PARÁMETRO PARA EVITAR CACHÉ) ---
 ID_ARCHIVO = "1lJKiR8B8_DbhTFVXXxdVoexMZ6pS3y6w"
 URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_ARCHIVO}/export?format=xlsx&t={int(time.time())}'
 
-@st.cache_data(ttl=10)
+@st.cache_data(ttl=5) # Cache de solo 5 segundos para máxima frescura
 def cargar_datos(url):
-    # Lee 'Registro', empieza en los datos reales (Fila 7)
-    df = pd.read_excel(url, sheet_name="Registro", skiprows=6, engine='openpyxl')
+    # Según tu imagen, los datos reales empiezan después de la fila 3 (skiprows=2) o 7 (skiprows=6)
+    # Ajustado para detectar desde la fila de encabezados 'Telefono, Nombre...'
+    df = pd.read_excel(url, sheet_name="Registro", skiprows=2, engine='openpyxl')
     return df
 
-# Título Principal
+# Título Principal con Nueva Fecha
 st.markdown("<h1 style='text-align: center;'>🎟️ BOLETOS RIFA 03/04/2026 🎟️</h1>", unsafe_allow_html=True)
 
 try:
@@ -29,16 +30,21 @@ try:
     # --- 3. PROCESAR ESTADOS PARA PINTAR EL MAPA ---
     for _, row in df_full.iterrows():
         try:
-            # Columna E (índice 4): Números seleccionados
-            # Columna F (índice 5): Estatus (Pagado/Pendiente)
-            if pd.notna(row.iloc[4]): 
-                nums = str(row.iloc[4]).replace(" ", "").split(',')
-                estado = str(row.iloc[5]).strip().lower() 
+            # Según image_f9e96bc.png: 
+            # Columna D (índice 3) = Numero seleccionado
+            # Columna F (índice 5) = Estatus
+            if pd.notna(row.iloc[3]): 
+                nums_raw = str(row.iloc[3])
+                # Limpiar la cadena por si hay comas o espacios
+                nums = nums_raw.replace(" ", "").split(',')
+                estado = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
                 
                 for n in nums:
                     if n:
+                        # Convertir a entero (maneja casos como "1.0")
                         num_int = int(float(n))
-                        info_boletos[num_int] = estado
+                        if 1 <= num_int <= N:
+                            info_boletos[num_int] = estado
         except:
             continue
 
@@ -66,11 +72,11 @@ try:
 
     # --- 5. LEYENDA Y ACTUALIZACIÓN ---
     st.markdown("""
-        <div style="text-align: center; font-size: 0.9rem; line-height: 1.6;">
+        <div style="text-align: center; font-size: 0.9rem; line-height: 1.6; border: 1px solid #ddd; padding: 10px; border-radius: 10px;">
             <span style="color: #28a745;">●</span> <b>Verde:</b> Pagado | 
             <span style="color: #ffc107;">●</span> <b>Amarillo:</b> Pendiente | 
             <span style="color: #bcbcbc;">○</span> <b>Blanco:</b> Disponible<br>
-            <b>Precio de Boleto: $170</b><br>
+            <b style="font-size: 1.1rem;">Precio de Boleto: $170</b><br>
             <i style="color: gray;">El mapa se tarda unos minutos en actualizarse ⌛</i>
         </div>
     """, unsafe_allow_html=True)
@@ -85,15 +91,15 @@ try:
     - **Nombre:** Rodrigo Antimo Mora
     """)
 
-    # --- 7. BOTÓN WHATSAPP VERDE ---
-    numero_wa = "5542006418" # Coloca tu número aquí
+    # --- 7. BOTÓN WHATSAPP PERSONALIZADO ---
+    numero_wa = "525542006418" 
     mensaje_wa = "Hola Rifa los gueros, Ya realice mi pago Aqui temando el comprobante para registrar mis boletos"
     mensaje_codificado = urllib.parse.quote(mensaje_wa)
     wa_link = f"https://wa.me/{numero_wa}?text={mensaje_codificado}"
     
     st.markdown(f"""
         <a href="{wa_link}" target="_blank" style="text-decoration: none;">
-            <div style="background-color: #25D366; color: white; padding: 15px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 1.2rem;">
+            <div style="background-color: #25D366; color: white; padding: 15px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; gap: 10px;">
                 MANDAR COMPROBANTE POR WHATSAPP ✅📱
             </div>
         </a>
@@ -101,10 +107,10 @@ try:
     
     st.write("")
 
-    # --- 8. MENSAJES FINALES ---
+    # --- 8. MENSAJES DE ADVERTENCIA ---
     st.warning("### 📸 ¡RECUERDA ENVIAR TU COMPROBANTE! ✨\n\n**Nota:** En el concepto del pago favor de poner su **Nombre**.")
     
     st.error("❗ UNA VEZ REALIZADO TU PAGO, TIENES 24 HRS PARA MANDAR TU COMPROBANTE, DE LO CONTRARIO EL NÚMERO SE LIBERARÁ.")
 
 except Exception as e:
-    st.error("Error al conectar con Google Sheets. Verifica los permisos de compartir.")
+    st.error(f"Error al conectar con la hoja: {e}")
