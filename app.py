@@ -5,16 +5,15 @@ import matplotlib.pyplot as plt
 import urllib.parse
 import time
 
-# --- 1. CONFIGURACIÓN DE PÁGINA ---
+# --- 1. CONFIGURACIÓN ---
 st.set_page_config(page_title="Rifa Los Güeros", layout="centered", page_icon="🎟️")
 
-# ID actualizado de tu Google Sheets
 ID_ARCHIVO = "1lJKiR8B8_DbhTFVXXxdVoexMZ6pS3y6w"
 URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_ARCHIVO}/export?format=xlsx&t={int(time.time())}'
 
 @st.cache_data(ttl=2)
 def cargar_datos(url):
-    # Se saltan 2 filas para que la fila 3 sea el encabezado (Telefono, Nombre, etc.)
+    # Lee desde la fila 3 (skiprows=2) donde están tus encabezados
     df = pd.read_excel(url, sheet_name="Registro", skiprows=2, engine='openpyxl')
     return df
 
@@ -25,22 +24,20 @@ try:
     N = 100 
     info_boletos = {}
     
-    # --- 2. LÓGICA DE PINTADO (COLUMNA D Y F) ---
+    # --- 2. LÓGICA DE PINTADO (CORRECCIÓN PARA DECIMALES Y COMAS) ---
     for _, row in df.iterrows():
         try:
-            # Columna D (Índice 3): Numero seleccionado
-            # Columna F (Índice 5): Estatus
+            # Columna D (índice 3): Numero seleccionado | Columna F (índice 5): Estatus
             celda_nums = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
-            # Estatus insensible a mayúsculas/minúsculas y sin espacios
             val_estatus = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
 
             if celda_nums and celda_nums.lower() != 'nan':
-                # Separación estricta por comas para números como "2,4,10"
+                # Separamos por comas (ej: "2.0, 4.0")
                 partes = celda_nums.split(',')
                 for p in partes:
-                    # Limpiamos cada número individualmente (quitamos decimales .0 y espacios)
+                    # LIMPIEZA CLAVE: quitamos el ".0" si existe y espacios
                     p_limpia = p.strip().split('.')[0]
-                    # Extraemos solo los dígitos para asegurar que sea un número válido
+                    # Solo nos quedamos con los números
                     num_solo = "".join(filter(str.isdigit, p_limpia))
                     
                     if num_solo:
@@ -85,7 +82,7 @@ try:
     
     st.write("---")
     
-    # --- 5. PAGOS ---
+    # --- 5. DATOS DE PAGO ---
     st.markdown("### 🏦 DATOS DE PAGO:")
     st.info("- **Banco:** Banamex\n- **Cuenta:** 002180702288920746\n- **Nombre:** Rodrigo Antimo Mora")
 
@@ -97,7 +94,7 @@ try:
     st.markdown(f'<a href="{wa_link}" target="_blank" style="text-decoration:none;"><div style="background-color:#25D366; color:white; padding:15px; border-radius:10px; text-align:center; font-weight:bold; font-size:1.2rem;">MANDAR COMPROBANTE POR WHATSAPP ✅📱</div></a>', unsafe_allow_html=True)
     
     st.write("")
-    st.warning("### 📸 ¡RECUERDA ENVIAR TU COMPROBANTE! ✨\n\n**Nota:** En el concepto del pago favor de poner su **Nombre**.")
+    st.warning("### 📸 ¡RECUERDA ENVIAR TU COMPROBANTE! ✨")
     st.error("❗ UNA VEZ REALIZADO TU PAGO, TIENES 24 HRS PARA MANDAR TU COMPROBANTE, DE LO CONTRARIO EL NÚMERO SE LIBERARÁ.")
 
 except Exception as e:
