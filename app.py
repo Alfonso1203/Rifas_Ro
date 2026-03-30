@@ -13,7 +13,7 @@ URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_ARCHIVO}/export?format=
 
 @st.cache_data(ttl=2)
 def cargar_datos(url):
-    # Saltamos 2 filas para que la fila 3 sea el encabezado (donde dice Telefono, Nombre, etc.)
+    # skiprow=2 asegura que la fila 3 sea el encabezado (donde están Telefono, Nombre, etc.)
     df = pd.read_excel(url, sheet_name="Registro", skiprows=2, engine='openpyxl')
     return df
 
@@ -24,28 +24,24 @@ try:
     N = 100 
     info_boletos = {}
     
-    # --- 2. LÓGICA DE PINTADO (ULTRA FLEXIBLE) ---
+    # --- 2. LÓGICA DE PINTADO PRECISA (COLUMNA D Y F) ---
     for _, row in df.iterrows():
         try:
             # Columna D (Índice 3): Numero seleccionado
             # Columna F (Índice 5): Estatus
             celda_nums = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
-            # Limpiamos estatus: minúsculas y sin espacios laterales
-            val_estatus = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
+            estatus_raw = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
 
             if celda_nums and celda_nums.lower() != 'nan':
-                # Separamos por comas por si hay varios: "2, 4, 10"
-                partes = celda_nums.split(',')
-                for p in partes:
-                    # Quitamos espacios y decimales (ej. "2.0" -> "2")
-                    p_limpia = p.strip().split('.')[0]
-                    # Solo nos quedamos con los dígitos
-                    num_solo = "".join(filter(str.isdigit, p_limpia))
-                    
-                    if num_solo:
-                        num_id = int(num_solo)
+                # Separación estricta por comas
+                lista_de_numeros = celda_nums.split(',')
+                for n in lista_de_numeros:
+                    # Limpieza de cada número (quitar espacios o decimales accidentales)
+                    n_limpio = n.strip().split('.')[0]
+                    if n_limpio.isdigit():
+                        num_id = int(n_limpio)
                         if 1 <= num_id <= N:
-                            info_boletos[num_id] = val_estatus
+                            info_boletos[num_id] = estatus_raw
         except:
             continue
 
@@ -60,11 +56,10 @@ try:
         
         estado = info_boletos.get(i, "")
         
-        # Comparamos el estatus (insensible a mayúsculas/minúsculas)
         if "pagado" in estado:
-            color, txt_c = '#28a745', 'white' # VERDE
+            color, txt_c = '#28a745', 'white' # Verde
         elif "pendiente" in estado:
-            color, txt_c = '#ffc107', 'black' # AMARILLO
+            color, txt_c = '#ffc107', 'black' # Amarillo
         
         ax.add_patch(plt.Rectangle((c, -f), 0.9, 0.8, facecolor=color, edgecolor='#bcbcbc', linewidth=0.5))
         ax.text(c + 0.45, -f + 0.4, str(i), ha='center', va='center', fontsize=8, fontweight='bold', color=txt_c)
@@ -101,4 +96,4 @@ try:
     st.error("❗ UNA VEZ REALIZADO TU PAGO, TIENES 24 HRS PARA MANDAR TU COMPROBANTE, DE LO CONTRARIO EL NÚMERO SE LIBERARÁ.")
 
 except Exception as e:
-    st.error(f"Error técnico: {e}")
+    st.error(f"Error al conectar con la tabla: {e}")
