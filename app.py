@@ -8,38 +8,54 @@ import time
 st.set_page_config(page_title="Rifa Los Güeros", layout="centered")
 
 ID_ARCHIVO = "1lJKiR8B8_DbhTFVXXxdVoexMZ6pS3y6w"
+# Forzamos la descarga del archivo fresco
 URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_ARCHIVO}/export?format=xlsx&t={int(time.time())}'
 
-@st.cache_data(ttl=5)
+@st.cache_data(ttl=2)
 def cargar_datos():
-    # Se salta 2 filas: los encabezados están en la fila 3
-    df = pd.read_excel(URL_DRIVE, sheet_name="Registro", skiprows=2, engine='openpyxl')
+    # Eliminamos skiprows para analizar el archivo completo primero
+    df = pd.read_excel(URL_DRIVE, sheet_name="Registro", engine='openpyxl')
     return df
 
 st.title("🎟️ BOLETOS RIFA 03/04/2026 🎟️")
 
 try:
-    df_full = cargar_datos()
+    df_raw = cargar_datos()
+    
+    # --- LIMPIEZA DINÁMICA ---
+    # Buscamos la fila donde realmente empiezan los datos (donde 'Estatus' no sea nulo)
+    # O simplemente filtramos las filas que tengan datos en la columna de números (Columna D / Índice 3)
+    
     N = 100 
     info_boletos = {}
     
-    # --- 2. LÓGICA DE PINTADO (CORREGIDA) ---
-    for index, row in df_full.iterrows():
-        # Columna D (índice 3): Numero seleccionado | Columna F (índice 5): Estatus
-        celda_nums = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
-        estado_crudo = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
-        
-        if celda_nums and celda_nums.lower() != 'nan':
-            # Separar números por coma (ej: "1,2,3")
-            lista_n = celda_nums.split(',')
-            for n in lista_n:
-                n_limpio = n.strip().split('.')[0] # Quita espacios y posibles ".0"
-                if n_limpio.isdigit():
-                    num_int = int(n_limpio)
-                    if 1 <= num_int <= N:
-                        info_boletos[num_int] = estado_crudo
+    # Iteramos sobre todas las filas del archivo
+    for index, row in df_raw.iterrows():
+        try:
+            # Intentamos obtener valores de las columnas D (3) y F (5)
+            # Usamos iloc para evitar problemas si el encabezado no se leyó bien
+            val_nums = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
+            val_estatus = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
+            
+            # Si la celda contiene números y no es el encabezado "Numero seleccionado"
+            if val_nums and val_nums.lower() not in ['nan', 'numero seleccionado']:
+                # Separar números por comas
+                lista_n = val_nums.split(',')
+                for n in lista_n:
+                    # Limpiar el número (quitar .0 o espacios)
+                    n_limpio = n.strip().split('.')[0]
+                    if n_limpio.isdigit():
+                        num_int = int(n_limpio)
+                        if 1 <= num_int <= N:
+                            # Prioridad: Si ya es 'pagado', no lo cambies a 'pendiente'
+                            nuevo_estado = val_estatus
+                            estado_actual = info_boletos.get(num_int, "")
+                            if estado_actual != "pagado":
+                                info_boletos[num_int] = nuevo_estado
+        except:
+            continue
 
-    # --- 3. CREACIÓN DEL MAPA ---
+    # --- 2. CREACIÓN DEL MAPA ---
     columnas = 10
     filas = int(np.ceil(N / columnas))
     fig, ax = plt.subplots(figsize=(10, filas * 0.8))
@@ -50,7 +66,6 @@ try:
         
         est = info_boletos.get(i, "")
         
-        # Prioridad de colores
         if 'pagado' in est:
             color, txt_c = '#28a745', 'white' # VERDE
         elif 'pendiente' in est:
@@ -66,7 +81,7 @@ try:
     ax.axis('off')
     st.pyplot(fig, transparent=True)
 
-    # --- 4. LEYENDA Y DATOS ---
+    # --- 3. LEYENDA Y DATOS DE PAGO ---
     st.markdown(f"""
         <div style="text-align: center; border: 1px solid #444; padding: 15px; border-radius: 10px; background-color: #121212;">
             <span style="color: #28a745; font-size: 1.2rem;">●</span> <b>Pagado</b> &nbsp;&nbsp;
@@ -90,4 +105,4 @@ try:
     st.success("### 📸 ¡MANDA TU COMPROBANTE! ✨")
 
 except Exception as e:
-    st.error(f"Error: {e}")
+    st.error(f"Error al procesar el Excel: {e}")
