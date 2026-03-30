@@ -13,7 +13,7 @@ URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_ARCHIVO}/export?format=
 
 @st.cache_data(ttl=2)
 def cargar_datos(url):
-    # Saltamos las filas hasta llegar a los datos (según captura ea0c10)
+    # Saltamos las filas hasta llegar a los datos (según captura ea131c)
     df = pd.read_excel(url, sheet_name="Registro", skiprows=2, engine='openpyxl')
     return df
 
@@ -24,7 +24,7 @@ try:
     N = 100 
     info_boletos = {}
     
-    # --- 2. LÓGICA DE PINTADO REFORZADA ---
+    # --- 2. LÓGICA DE PINTADO (COLUMNA D PARA NÚMEROS, F PARA ESTATUS) ---
     for _, row in df.iterrows():
         try:
             # Columna D (índice 3): Numero seleccionado
@@ -33,16 +33,19 @@ try:
             val_estatus = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
 
             if celda_nums and celda_nums != 'nan':
-                # Limpiamos espacios y separamos por comas
-                partes = celda_nums.replace(" ", "").split(',')
+                # Dividimos por comas para casos como "2, 4, 10"
+                partes = celda_nums.split(',')
                 for p in partes:
-                    if p:
-                        # Extraemos solo los dígitos por si hay texto accidental
-                        num_solo = "".join(filter(str.isdigit, p.split('.')[0]))
-                        if num_solo:
-                            num_id = int(num_solo)
-                            if 1 <= num_id <= N:
-                                info_boletos[num_id] = val_estatus
+                    # Limpiamos cada parte: quitamos espacios y decimales
+                    p_limpia = p.strip().split('.')[0]
+                    # Extraemos solo los dígitos
+                    num_solo = "".join(filter(str.isdigit, p_limpia))
+                    
+                    if num_solo:
+                        num_id = int(num_solo)
+                        if 1 <= num_id <= N:
+                            # Guardamos el estatus para cada número individual
+                            info_boletos[num_id] = val_estatus
         except:
             continue
 
@@ -81,10 +84,11 @@ try:
     
     st.write("---")
     
-    # --- 5. PAGOS Y WHATSAPP (LETRAS BLANCAS) ---
+    # --- 5. DATOS DE PAGO ---
     st.markdown("### 🏦 DATOS DE PAGO:")
     st.info("- **Banco:** Banamex\n- **Cuenta:** 002180702288920746\n- **Nombre:** Rodrigo Antimo Mora")
 
+    # --- 6. BOTÓN WHATSAPP (LETRAS BLANCAS) ---
     numero_wa = "525542006418" 
     mensaje_wa = "Hola Rifa los gueros, Ya realice mi pago Aqui temando el comprobante para registrar mis boletos"
     wa_link = f"https://wa.me/{numero_wa}?text={urllib.parse.quote(mensaje_wa)}"
@@ -96,4 +100,4 @@ try:
     st.error("❗ UNA VEZ REALIZADO TU PAGO, TIENES 24 HRS PARA MANDAR TU COMPROBANTE, DE LO CONTRARIO EL NÚMERO SE LIBERARÁ.")
 
 except Exception as e:
-    st.error(f"Error: {e}")
+    st.error(f"Error técnico: {e}")
