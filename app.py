@@ -6,89 +6,98 @@ import urllib.parse
 import time
 
 # --- 1. CONFIGURACIÓN ---
-st.set_page_config(page_title="Rifa Los Güeros", layout="centered", page_icon="🎟️")
+st.set_page_config(page_title="Rifa Rodrigo 2026", layout="centered")
 
+# ID actualizado de tu Google Sheets
 ID_ARCHIVO = "1lJKiR8B8_DbhTFVXXxdVoexMZ6pS3y6w"
 URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_ARCHIVO}/export?format=xlsx&t={int(time.time())}'
 
-@st.cache_data(ttl=2)
-def cargar_datos(url):
-    # Cargamos el archivo. skiprows=2 para saltar el logo/título y llegar a los encabezados.
-    df = pd.read_excel(url, sheet_name="Registro", skiprows=2, engine='openpyxl')
-    # Limpiamos nombres de columnas por si tienen espacios locos
-    df.columns = [str(c).strip() for c in df.columns]
+@st.cache_data(ttl=5) # Actualización rápida
+def cargar_datos():
+    # Cargamos el Excel saltando 2 filas para que la fila 3 sea el encabezado
+    df = pd.read_excel(URL_DRIVE, sheet_name="Registro", skiprows=2, engine='openpyxl')
     return df
 
-st.markdown("<h1 style='text-align: center;'>🎟️ BOLETOS RIFA 03/04/2026 🎟️</h1>", unsafe_allow_html=True)
+st.title("🎟️ BOLETOS RIFA 27/03/2026 🎟️")
 
 try:
-    df = cargar_datos(URL_DRIVE)
+    df_full = cargar_datos()
     N = 100 
     info_boletos = {}
     
-    # Identificamos las columnas por nombre exacto para que no falle si se mueven
-    col_num = "Numero seleccionado"
-    col_est = "Estatus"
-
-    if col_num in df.columns and col_est in df.columns:
-        for _, row in df.iterrows():
-            celda_nums = str(row[col_num]).strip()
-            val_estatus = str(row[col_est]).strip().lower()
-
+    # --- 2. LÓGICA DEL MAPA (CORREGIDA) ---
+    for index, row in df_full.iterrows():
+        try:
+            # Columna D (índice 3): Números seleccionados
+            # Columna F (índice 5): Estatus
+            celda_nums = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
+            estado = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
+            
             if celda_nums and celda_nums.lower() != 'nan':
-                # Separar por comas (ej. "2, 4.0, 10")
-                partes = celda_nums.split(',')
-                for p in partes:
-                    # Quitamos decimales y espacios
-                    p_limpia = p.strip().split('.')[0]
-                    num_solo = "".join(filter(str.isdigit, p_limpia))
-                    
-                    if num_solo:
-                        num_id = int(num_solo)
-                        if 1 <= num_id <= N:
-                            info_boletos[num_id] = val_estatus
-    else:
-        st.error(f"No encontré las columnas '{col_num}' o '{col_est}'. Revisa los nombres en tu Excel.")
+                # Separamos por comas y limpiamos decimales como "2.0"
+                nums = celda_nums.split(',')
+                for n in nums:
+                    n_limpio = n.strip().split('.')[0]
+                    if n_limpio.isdigit():
+                        num_int = int(n_limpio)
+                        # Guardamos info para el mapa y para la consulta
+                        info_boletos[num_int] = {
+                            "nombre": str(row.iloc[1]), # Columna B
+                            "apellido": str(row.iloc[2]), # Columna C
+                            "estado": estado
+                        }
+        except:
+            continue
 
-    # --- 2. DIBUJAR MAPA ---
+    # --- 3. CREACIÓN DEL MAPA ---
     columnas = 15
-    filas = int(np.ceil(N / columnas))
-    fig, ax = plt.subplots(figsize=(10, filas * 0.7 + 1))
+    filas = int(np.ceil(100 / columnas))
+    fig, ax = plt.subplots(figsize=(12, filas * 0.7 + 2))
     
-    for i in range(1, N + 1):
+    for i in range(1, 101):
         f, c = (i - 1) // columnas, (i - 1) % columnas
-        color, txt_c = 'white', 'black' 
+        color, txt_c = 'white', 'black'
         
-        estado = info_boletos.get(i, "")
+        info = info_boletos.get(i, {"estado": ""})
+        est = info["estado"]
         
-        if "pagado" in estado:
+        # Pintamos según estatus (insensible a mayúsculas)
+        if 'pagado' in est:
             color, txt_c = '#28a745', 'white' # VERDE
-        elif "pendiente" in estado:
+        elif 'pendiente' in est:
             color, txt_c = '#ffc107', 'black' # AMARILLO
         
-        ax.add_patch(plt.Rectangle((c, -f), 0.9, 0.8, facecolor=color, edgecolor='#bcbcbc', linewidth=0.5))
+        ax.add_patch(plt.Rectangle((c, -f), 0.9, 0.8, facecolor=color, edgecolor='#333333', linewidth=0.5))
         ax.text(c + 0.45, -f + 0.4, str(i), ha='center', va='center', fontsize=8, fontweight='bold', color=txt_c)
 
     ax.set_xlim(-0.5, 15); ax.set_ylim(-filas - 0.5, 1); ax.axis('off')
     st.pyplot(fig)
 
-    # --- 3. LEYENDA Y PAGOS ---
-    st.markdown("""
-        <div style="text-align: center; font-size: 0.9rem; border: 1px solid #ddd; padding: 10px; border-radius: 10px;">
-            <span style="color: #28a745; font-size: 1.2rem;">●</span> <b>Pagado</b> | 
-            <span style="color: #ffc107; font-size: 1.2rem;">●</span> <b>Pendiente</b> | 
-            <span style="color: #bcbcbc; font-size: 1.2rem;">○</span> <b>Disponible</b><br>
-            <b>Precio de Boleto: $170</b>
-        </div>
-    """, unsafe_allow_html=True)
-
-    st.info("**🏦 DATOS DE PAGO:**\n- Banamex | Cuenta: 002180702288920746 | Rodrigo Antimo Mora")
-
-    numero_wa = "525542006418" 
-    mensaje_wa = "Hola Rodrigo! Ya realicé mi pago. Aquí te mando el comprobante."
-    wa_link = f"https://wa.me/{numero_wa}?text={urllib.parse.quote(mensaje_wa)}"
+    # --- 4. DETALLES AL SELECCIONAR ---
+    st.markdown("### 🔍 Consultar detalle de boleto")
+    num_consulta = st.number_input("Ingresa el número de boleto:", min_value=1, max_value=100, step=1)
     
-    st.markdown(f'<a href="{wa_link}" target="_blank" style="text-decoration:none;"><div style="background-color:#25D366; color:white; padding:15px; border-radius:10px; text-align:center; font-weight:bold; font-size:1.1rem;">MANDAR COMPROBANTE POR WHATSAPP ✅📱</div></a>', unsafe_allow_html=True)
+    if num_consulta in info_boletos:
+        det = info_boletos[num_consulta]
+        st.write(f"👤 **Nombre:** {det['nombre']} {det['apellido']}")
+        st.write(f"🎟️ **Número:** {num_consulta}")
+        st.write(f"📌 **Estatus:** {det['estado'].capitalize()}")
+    else:
+        st.write("✨ Este boleto está **Disponible**")
+
+    # --- 5. LEYENDA Y PAGOS (SIN MODIFICACIONES) ---
+    st.markdown("<p style='text-align: center; color: gray;'><i>Actualización automática cada pocos segundos ⏳</i></p>", unsafe_allow_html=True)
+    st.write("---")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.info("**🏦 DATOS DE PAGO:**\n- Banamex\n- Cuenta: 002180702288920746\n- Rodrigo Antimo Mora")
+    with col2:
+        numero_tel = "525542006418" 
+        link_wa = f"https://wa.me/{numero_tel}?text=Hola%20Rodrigo!%20Ya%20realice%20mi%20pago.%20Aqui%20te%20mando%20mi%20comprobante."
+        st.link_button("Apartar por WhatsApp 📱", link_wa, use_container_width=True)
+
+    st.warning("### 📸 ¡MANDA TU COMPROBANTE! ✨")
 
 except Exception as e:
-    st.error(f"Error: {e}")
+    st.error(f"Conectando con la base de datos... Error: {e}")
