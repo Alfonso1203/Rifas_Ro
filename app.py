@@ -5,15 +5,16 @@ import matplotlib.pyplot as plt
 import urllib.parse
 import time
 
-# --- 1. CONFIGURACIÓN ---
+# --- 1. CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Rifa Los Güeros", layout="centered", page_icon="🎟️")
 
+# ID actualizado de tu Google Sheets
 ID_ARCHIVO = "1lJKiR8B8_DbhTFVXXxdVoexMZ6pS3y6w"
 URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_ARCHIVO}/export?format=xlsx&t={int(time.time())}'
 
 @st.cache_data(ttl=2)
 def cargar_datos(url):
-    # skiprow=2 asegura que la fila 3 sea el encabezado (donde están Telefono, Nombre, etc.)
+    # Se saltan 2 filas para que la fila 3 sea el encabezado (Telefono, Nombre, etc.)
     df = pd.read_excel(url, sheet_name="Registro", skiprows=2, engine='openpyxl')
     return df
 
@@ -24,24 +25,28 @@ try:
     N = 100 
     info_boletos = {}
     
-    # --- 2. LÓGICA DE PINTADO PRECISA (COLUMNA D Y F) ---
+    # --- 2. LÓGICA DE PINTADO (COLUMNA D Y F) ---
     for _, row in df.iterrows():
         try:
             # Columna D (Índice 3): Numero seleccionado
             # Columna F (Índice 5): Estatus
             celda_nums = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
-            estatus_raw = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
+            # Estatus insensible a mayúsculas/minúsculas y sin espacios
+            val_estatus = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
 
             if celda_nums and celda_nums.lower() != 'nan':
-                # Separación estricta por comas
-                lista_de_numeros = celda_nums.split(',')
-                for n in lista_de_numeros:
-                    # Limpieza de cada número (quitar espacios o decimales accidentales)
-                    n_limpio = n.strip().split('.')[0]
-                    if n_limpio.isdigit():
-                        num_id = int(n_limpio)
+                # Separación estricta por comas para números como "2,4,10"
+                partes = celda_nums.split(',')
+                for p in partes:
+                    # Limpiamos cada número individualmente (quitamos decimales .0 y espacios)
+                    p_limpia = p.strip().split('.')[0]
+                    # Extraemos solo los dígitos para asegurar que sea un número válido
+                    num_solo = "".join(filter(str.isdigit, p_limpia))
+                    
+                    if num_solo:
+                        num_id = int(num_solo)
                         if 1 <= num_id <= N:
-                            info_boletos[num_id] = estatus_raw
+                            info_boletos[num_id] = val_estatus
         except:
             continue
 
@@ -57,9 +62,9 @@ try:
         estado = info_boletos.get(i, "")
         
         if "pagado" in estado:
-            color, txt_c = '#28a745', 'white' # Verde
+            color, txt_c = '#28a745', 'white' # VERDE
         elif "pendiente" in estado:
-            color, txt_c = '#ffc107', 'black' # Amarillo
+            color, txt_c = '#ffc107', 'black' # AMARILLO
         
         ax.add_patch(plt.Rectangle((c, -f), 0.9, 0.8, facecolor=color, edgecolor='#bcbcbc', linewidth=0.5))
         ax.text(c + 0.45, -f + 0.4, str(i), ha='center', va='center', fontsize=8, fontweight='bold', color=txt_c)
@@ -89,11 +94,4 @@ try:
     mensaje_wa = "Hola Rifa los gueros, Ya realice mi pago Aquí te mando el comprobante para registrar mis boletos"
     wa_link = f"https://wa.me/{numero_wa}?text={urllib.parse.quote(mensaje_wa)}"
     
-    st.markdown(f'<a href="{wa_link}" target="_blank" style="text-decoration:none;"><div style="background-color:#25D366; color:white; padding:15px; border-radius:10px; text-align:center; font-weight:bold; font-size:1.2rem;">MANDAR COMPROBANTE POR WHATSAPP ✅📱</div></a>', unsafe_allow_html=True)
-    
-    st.write("")
-    st.warning("### 📸 ¡RECUERDA ENVIAR TU COMPROBANTE! ✨\n\n**Nota:** En el concepto del pago favor de poner su **Nombre**.")
-    st.error("❗ UNA VEZ REALIZADO TU PAGO, TIENES 24 HRS PARA MANDAR TU COMPROBANTE, DE LO CONTRARIO EL NÚMERO SE LIBERARÁ.")
-
-except Exception as e:
-    st.error(f"Error al conectar con la tabla: {e}")
+    st.markdown(f'<a href="{wa_link}" target="_blank" style="text-decoration:none;"><div style="background-color:#25D366; color:white; padding
