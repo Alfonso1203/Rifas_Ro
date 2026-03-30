@@ -13,7 +13,7 @@ URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_ARCHIVO}/export?format=
 
 @st.cache_data(ttl=2)
 def cargar_datos(url):
-    # Leemos desde la fila donde empiezan tus encabezados (Telefono, Nombre...)
+    # Leemos desde la fila donde empiezan los datos reales
     df = pd.read_excel(url, sheet_name="Registro", skiprows=2, engine='openpyxl')
     return df
 
@@ -24,19 +24,19 @@ try:
     N = 100 
     info_boletos = {}
     
-    # --- 2. LÓGICA DE PINTADO (COLUMNA D PARA NÚMEROS, F PARA ESTATUS) ---
+    # --- 2. LÓGICA DE PINTADO (COLUMNA D Y F) ---
     for _, row in df.iterrows():
         try:
-            # Columna D (índice 3): Numero seleccionado
-            # Columna F (índice 5): Estatus
+            # Columna D (3): Numero seleccionado | Columna F (5): Estatus
             val_num = str(row.iloc[3]) if pd.notna(row.iloc[3]) else ""
             val_estatus = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
 
             if val_num and val_num != 'nan':
-                # Limpiamos y separamos por comas
+                # Limpieza total de caracteres no numéricos excepto comas
                 numeros = val_num.replace(" ", "").split(',')
                 for n in numeros:
                     if n:
+                        # Convertir a entero limpio (ej. 1.0 -> 1)
                         num_id = int(float(n))
                         if 1 <= num_id <= N:
                             info_boletos[num_id] = val_estatus
@@ -55,9 +55,9 @@ try:
         estado = info_boletos.get(i, "")
         
         if "pagado" in estado:
-            color, txt_c = '#28a745', 'white' # VERDE
+            color, txt_c = '#28a745', 'white' 
         elif "pendiente" in estado:
-            color, txt_c = '#ffc107', 'black' # AMARILLO
+            color, txt_c = '#ffc107', 'black' 
         
         ax.add_patch(plt.Rectangle((c, -f), 0.9, 0.8, facecolor=color, edgecolor='#bcbcbc', linewidth=0.5))
         ax.text(c + 0.45, -f + 0.4, str(i), ha='center', va='center', fontsize=8, fontweight='bold', color=txt_c)
@@ -65,12 +65,12 @@ try:
     ax.set_xlim(-0.5, 15); ax.set_ylim(-filas - 0.5, 1); ax.axis('off')
     st.pyplot(fig)
 
-    # --- 4. LEYENDA ---
+    # --- 4. LEYENDA (SOLO PELOTITAS) ---
     st.markdown("""
         <div style="text-align: center; font-size: 0.9rem; line-height: 1.6; border: 1px solid #ddd; padding: 10px; border-radius: 10px;">
-            <span style="color: #28a745;">●</span> <b>Verde:</b> Pagado | 
-            <span style="color: #ffc107;">●</span> <b>Amarillo:</b> Pendiente | 
-            <span style="color: #bcbcbc;">○</span> <b>Blanco:</b> Disponible<br>
+            <span style="color: #28a745; font-size: 1.2rem;">●</span> <b>Pagado</b> | 
+            <span style="color: #ffc107; font-size: 1.2rem;">●</span> <b>Pendiente</b> | 
+            <span style="color: #bcbcbc; font-size: 1.2rem;">○</span> <b>Disponible</b><br>
             <b style="font-size: 1.1rem;">Precio de Boleto: $170</b><br>
             <i style="color: gray;">El mapa se tarda unos minutos en actualizarse ⌛</i>
         </div>
@@ -78,16 +78,14 @@ try:
     
     st.write("---")
     
-    # --- 5. PAGOS ---
+    # --- 5. PAGOS Y BOTÓN (LETRAS BLANCAS) ---
     st.markdown("### 🏦 DATOS DE PAGO:")
     st.info("- **Banco:** Banamex\n- **Cuenta:** 002180702288920746\n- **Nombre:** Rodrigo Antimo Mora")
 
-    # --- 6. BOTÓN WHATSAPP (LETRAS BLANCAS) ---
     numero_wa = "525542006418" 
     mensaje_wa = "Hola Rifa los gueros, Ya realice mi pago Aqui temando el comprobante para registrar mis boletos"
     wa_link = f"https://wa.me/{numero_wa}?text={urllib.parse.quote(mensaje_wa)}"
     
-    # Se agregó 'color: white;' para que las letras sean blancas
     st.markdown(f'<a href="{wa_link}" target="_blank" style="text-decoration:none;"><div style="background-color:#25D366; color:white; padding:15px; border-radius:10px; text-align:center; font-weight:bold; font-size:1.2rem;">MANDAR COMPROBANTE POR WHATSAPP ✅📱</div></a>', unsafe_allow_html=True)
     
     st.write("")
@@ -95,4 +93,4 @@ try:
     st.error("❗ UNA VEZ REALIZADO TU PAGO, TIENES 24 HRS PARA MANDAR TU COMPROBANTE, DE LO CONTRARIO EL NÚMERO SE LIBERARÁ.")
 
 except Exception as e:
-    st.error(f"Error técnico: {e}")
+    st.error(f"Error al cargar el mapa. Verifica que el Excel en Drive tenga datos en la columna D y F.")
