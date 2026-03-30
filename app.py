@@ -13,7 +13,7 @@ URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_ARCHIVO}/export?format=
 
 @st.cache_data(ttl=2)
 def cargar_datos(url):
-    # Saltamos las filas hasta llegar a los datos (según captura ea131c)
+    # Leemos desde la fila de encabezados (skiprows=2 según tus capturas)
     df = pd.read_excel(url, sheet_name="Registro", skiprows=2, engine='openpyxl')
     return df
 
@@ -24,27 +24,24 @@ try:
     N = 100 
     info_boletos = {}
     
-    # --- 2. LÓGICA DE PINTADO (COLUMNA D PARA NÚMEROS, F PARA ESTATUS) ---
+    # --- 2. LÓGICA DE PINTADO (MAYÚSCULAS/MINÚSCULAS E IGNORE ESPACIOS) ---
     for _, row in df.iterrows():
         try:
-            # Columna D (índice 3): Numero seleccionado
-            # Columna F (índice 5): Estatus
+            # Columna D (3): Numero seleccionado | Columna F (5): Estatus
             celda_nums = str(row.iloc[3]) if pd.notna(row.iloc[3]) else ""
+            # Limpiamos el estatus: quitamos espacios y pasamos a minúsculas para comparar
             val_estatus = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
 
             if celda_nums and celda_nums != 'nan':
-                # Dividimos por comas para casos como "2, 4, 10"
+                # Procesamos números separados por comas
                 partes = celda_nums.split(',')
                 for p in partes:
-                    # Limpiamos cada parte: quitamos espacios y decimales
                     p_limpia = p.strip().split('.')[0]
-                    # Extraemos solo los dígitos
                     num_solo = "".join(filter(str.isdigit, p_limpia))
                     
                     if num_solo:
                         num_id = int(num_solo)
                         if 1 <= num_id <= N:
-                            # Guardamos el estatus para cada número individual
                             info_boletos[num_id] = val_estatus
         except:
             continue
@@ -60,6 +57,7 @@ try:
         
         estado = info_boletos.get(i, "")
         
+        # Comparación flexible: no importa cómo esté escrito en el Excel
         if "pagado" in estado:
             color, txt_c = '#28a745', 'white' # VERDE
         elif "pendiente" in estado:
@@ -84,7 +82,7 @@ try:
     
     st.write("---")
     
-    # --- 5. DATOS DE PAGO ---
+    # --- 5. PAGOS ---
     st.markdown("### 🏦 DATOS DE PAGO:")
     st.info("- **Banco:** Banamex\n- **Cuenta:** 002180702288920746\n- **Nombre:** Rodrigo Antimo Mora")
 
