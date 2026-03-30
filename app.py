@@ -13,7 +13,7 @@ URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_ARCHIVO}/export?format=
 
 @st.cache_data(ttl=2)
 def cargar_datos(url):
-    # Leemos desde la fila de encabezados (skiprows=2 según tus capturas)
+    # Saltamos 2 filas para que la fila 3 sea el encabezado (donde dice Telefono, Nombre, etc.)
     df = pd.read_excel(url, sheet_name="Registro", skiprows=2, engine='openpyxl')
     return df
 
@@ -24,19 +24,22 @@ try:
     N = 100 
     info_boletos = {}
     
-    # --- 2. LÓGICA DE PINTADO (MAYÚSCULAS/MINÚSCULAS E IGNORE ESPACIOS) ---
+    # --- 2. LÓGICA DE PINTADO (ULTRA FLEXIBLE) ---
     for _, row in df.iterrows():
         try:
-            # Columna D (3): Numero seleccionado | Columna F (5): Estatus
-            celda_nums = str(row.iloc[3]) if pd.notna(row.iloc[3]) else ""
-            # Limpiamos el estatus: quitamos espacios y pasamos a minúsculas para comparar
+            # Columna D (Índice 3): Numero seleccionado
+            # Columna F (Índice 5): Estatus
+            celda_nums = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
+            # Limpiamos estatus: minúsculas y sin espacios laterales
             val_estatus = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
 
-            if celda_nums and celda_nums != 'nan':
-                # Procesamos números separados por comas
+            if celda_nums and celda_nums.lower() != 'nan':
+                # Separamos por comas por si hay varios: "2, 4, 10"
                 partes = celda_nums.split(',')
                 for p in partes:
+                    # Quitamos espacios y decimales (ej. "2.0" -> "2")
                     p_limpia = p.strip().split('.')[0]
+                    # Solo nos quedamos con los dígitos
                     num_solo = "".join(filter(str.isdigit, p_limpia))
                     
                     if num_solo:
@@ -57,7 +60,7 @@ try:
         
         estado = info_boletos.get(i, "")
         
-        # Comparación flexible: no importa cómo esté escrito en el Excel
+        # Comparamos el estatus (insensible a mayúsculas/minúsculas)
         if "pagado" in estado:
             color, txt_c = '#28a745', 'white' # VERDE
         elif "pendiente" in estado:
@@ -88,7 +91,7 @@ try:
 
     # --- 6. BOTÓN WHATSAPP (LETRAS BLANCAS) ---
     numero_wa = "525542006418" 
-    mensaje_wa = "Hola Rifa los gueros, Ya realice mi pago Aqui temando el comprobante para registrar mis boletos"
+    mensaje_wa = "Hola Rifa los gueros, Ya realice mi pago Aquí te mando el comprobante para registrar mis boletos"
     wa_link = f"https://wa.me/{numero_wa}?text={urllib.parse.quote(mensaje_wa)}"
     
     st.markdown(f'<a href="{wa_link}" target="_blank" style="text-decoration:none;"><div style="background-color:#25D366; color:white; padding:15px; border-radius:10px; text-align:center; font-weight:bold; font-size:1.2rem;">MANDAR COMPROBANTE POR WHATSAPP ✅📱</div></a>', unsafe_allow_html=True)
