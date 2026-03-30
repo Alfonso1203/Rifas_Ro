@@ -8,18 +8,16 @@ import urllib.parse
 # --- 1. CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Rifa Los Güeros", layout="centered", page_icon="🎟️")
 
-# --- 2. CONEXIÓN AL EXCEL (CON PARÁMETRO PARA EVITAR CACHÉ) ---
+# --- 2. CONEXIÓN AL EXCEL (FORZAR ACTUALIZACIÓN REAL) ---
 ID_ARCHIVO = "1lJKiR8B8_DbhTFVXXxdVoexMZ6pS3y6w"
 URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_ARCHIVO}/export?format=xlsx&t={int(time.time())}'
 
-@st.cache_data(ttl=5) # Cache de solo 5 segundos para máxima frescura
+@st.cache_data(ttl=2) # Bajamos a 2 segundos para que sea casi instantáneo
 def cargar_datos(url):
-    # Según tu imagen, los datos reales empiezan después de la fila 3 (skiprows=2) o 7 (skiprows=6)
-    # Ajustado para detectar desde la fila de encabezados 'Telefono, Nombre...'
+    # Saltamos las filas necesarias para llegar a los encabezados (Teléfono, Nombre, etc.)
     df = pd.read_excel(url, sheet_name="Registro", skiprows=2, engine='openpyxl')
     return df
 
-# Título Principal con Nueva Fecha
 st.markdown("<h1 style='text-align: center;'>🎟️ BOLETOS RIFA 03/04/2026 🎟️</h1>", unsafe_allow_html=True)
 
 try:
@@ -27,24 +25,23 @@ try:
     N = 100 
     info_boletos = {}
     
-    # --- 3. PROCESAR ESTADOS PARA PINTAR EL MAPA ---
+    # --- 3. PROCESAR ESTADOS (LÓGICA REFORZADA) ---
     for _, row in df_full.iterrows():
         try:
-            # Según image_f9e96bc.png: 
-            # Columna D (índice 3) = Numero seleccionado
-            # Columna F (índice 5) = Estatus
-            if pd.notna(row.iloc[3]): 
-                nums_raw = str(row.iloc[3])
-                # Limpiar la cadena por si hay comas o espacios
-                nums = nums_raw.replace(" ", "").split(',')
-                estado = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
-                
-                for n in nums:
+            # Columna D (índice 3): Numero seleccionado
+            # Columna F (índice 5): Estatus
+            celda_numeros = str(row.iloc[3])
+            celda_estatus = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
+
+            if celda_numeros and celda_numeros != 'nan':
+                # Limpiamos comas, espacios y puntos decimales (ej. "1.0" -> "1")
+                lista_nums = celda_numeros.replace(" ", "").split(',')
+                for n in lista_nums:
                     if n:
-                        # Convertir a entero (maneja casos como "1.0")
-                        num_int = int(float(n))
-                        if 1 <= num_int <= N:
-                            info_boletos[num_int] = estado
+                        # Convertimos a número entero limpio
+                        num_limpio = int(float(n))
+                        if 1 <= num_limpio <= N:
+                            info_boletos[num_limpio] = celda_estatus
         except:
             continue
 
@@ -55,14 +52,15 @@ try:
     
     for i in range(1, N + 1):
         f, c = (i - 1) // columnas, (i - 1) % columnas
-        color, txt_c = 'white', 'black' # Blanco - Disponible
+        color, txt_c = 'white', 'black' 
         
         estado = info_boletos.get(i, "")
         
-        if 'pagado' in estado:
-            color, txt_c = '#28a745', 'white' # Verde - Pagado
-        elif 'pendiente' in estado:
-            color, txt_c = '#ffc107', 'black' # Amarillo - Pendiente
+        # Lógica de colores exacta
+        if "pagado" in estado:
+            color, txt_c = '#28a745', 'white' # VERDE
+        elif "pendiente" in estado:
+            color, txt_c = '#ffc107', 'black' # AMARILLO
         
         ax.add_patch(plt.Rectangle((c, -f), 0.9, 0.8, facecolor=color, edgecolor='#bcbcbc', linewidth=0.5))
         ax.text(c + 0.45, -f + 0.4, str(i), ha='center', va='center', fontsize=8, fontweight='bold', color=txt_c)
@@ -71,7 +69,7 @@ try:
     st.pyplot(fig)
 
     # --- 5. LEYENDA Y ACTUALIZACIÓN ---
-    st.markdown("""
+    st.markdown(f"""
         <div style="text-align: center; font-size: 0.9rem; line-height: 1.6; border: 1px solid #ddd; padding: 10px; border-radius: 10px;">
             <span style="color: #28a745;">●</span> <b>Verde:</b> Pagado | 
             <span style="color: #ffc107;">●</span> <b>Amarillo:</b> Pendiente | 
@@ -91,15 +89,14 @@ try:
     - **Nombre:** Rodrigo Antimo Mora
     """)
 
-    # --- 7. BOTÓN WHATSAPP PERSONALIZADO ---
+    # --- 7. BOTÓN WHATSAPP ---
     numero_wa = "525542006418" 
     mensaje_wa = "Hola Rifa los gueros, Ya realice mi pago Aqui temando el comprobante para registrar mis boletos"
-    mensaje_codificado = urllib.parse.quote(mensaje_wa)
-    wa_link = f"https://wa.me/{numero_wa}?text={mensaje_codificado}"
+    wa_link = f"https://wa.me/{numero_wa}?text={urllib.parse.quote(mensaje_wa)}"
     
     st.markdown(f"""
         <a href="{wa_link}" target="_blank" style="text-decoration: none;">
-            <div style="background-color: #25D366; color: white; padding: 15px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <div style="background-color: #25D366; color: white; padding: 15px; border-radius: 10px; text-align: center; font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; justify-content: center;">
                 MANDAR COMPROBANTE POR WHATSAPP ✅📱
             </div>
         </a>
@@ -107,10 +104,9 @@ try:
     
     st.write("")
 
-    # --- 8. MENSAJES DE ADVERTENCIA ---
+    # --- 8. MENSAJES FINALES ---
     st.warning("### 📸 ¡RECUERDA ENVIAR TU COMPROBANTE! ✨\n\n**Nota:** En el concepto del pago favor de poner su **Nombre**.")
-    
     st.error("❗ UNA VEZ REALIZADO TU PAGO, TIENES 24 HRS PARA MANDAR TU COMPROBANTE, DE LO CONTRARIO EL NÚMERO SE LIBERARÁ.")
 
 except Exception as e:
-    st.error(f"Error al conectar con la hoja: {e}")
+    st.error(f"Error al cargar el mapa: {e}")
