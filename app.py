@@ -8,13 +8,13 @@ import time
 # --- 1. CONFIGURACIÓN ---
 st.set_page_config(page_title="Rifa Rodrigo 2026", layout="centered")
 
-# ID de tu Google Sheets
+# ID de tu Google Sheets (Mismo ID verificado)
 ID_ARCHIVO = "1lJKiR8B8_DbhTFVXXxdVoexMZ6pS3y6w"
 URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_ARCHIVO}/export?format=xlsx&t={int(time.time())}'
 
-@st.cache_data(ttl=5) 
+@st.cache_data(ttl=2) # Actualización casi instantánea
 def cargar_datos():
-    # Saltamos 2 filas para que la fila 3 del Excel sea el encabezado (donde están tus datos)
+    # Saltamos 2 filas para que la fila 3 sea el encabezado real
     df = pd.read_excel(URL_DRIVE, sheet_name="Registro", skiprows=2, engine='openpyxl')
     return df
 
@@ -25,23 +25,25 @@ try:
     N = 100 
     info_boletos = {}
     
-    # --- 2. LÓGICA DEL MAPA (PINTADO) ---
+    # --- 2. LÓGICA DE PINTADO (CORRECCIÓN CRÍTICA) ---
     for index, row in df_full.iterrows():
         try:
-            # Columna D (índice 3): Numero seleccionado | Columna F (índice 5): Estatus
+            # Columna D es el índice 3 (Números)
+            # Columna F es el índice 5 (Estatus)
             celda_nums = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
-            estado = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
+            # Limpiamos el estatus: quitamos espacios y pasamos a minúsculas
+            estado_crudo = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
             
             if celda_nums and celda_nums.lower() != 'nan':
-                # Procesamos números separados por comas
-                nums = celda_nums.split(',')
-                for n in nums:
-                    # Limpiamos espacios y decimales como "2.0"
+                # Dividimos por coma por si hay varios: "2, 5, 10"
+                lista_n = celda_nums.split(',')
+                for n in lista_n:
+                    # Quitamos decimales (.0) y espacios accidentales
                     n_limpio = n.strip().split('.')[0]
                     if n_limpio.isdigit():
                         num_int = int(n_limpio)
                         if 1 <= num_int <= N:
-                            info_boletos[num_int] = estado
+                            info_boletos[num_int] = estado_crudo
         except:
             continue
 
@@ -52,10 +54,11 @@ try:
     
     for i in range(1, 101):
         f, c = (i - 1) // columnas, (i - 1) % columnas
-        color, txt_c = 'white', 'black' # Disponible (Blanco)
+        color, txt_c = 'white', 'black' # Fondo por defecto: Blanco
         
         est = info_boletos.get(i, "")
         
+        # Validación de colores por palabra clave
         if 'pagado' in est:
             color, txt_c = '#28a745', 'white' # VERDE
         elif 'pendiente' in est:
@@ -67,7 +70,7 @@ try:
     ax.set_xlim(-0.5, 15); ax.set_ylim(-filas - 0.5, 1); ax.axis('off')
     st.pyplot(fig)
 
-    # --- 4. LEYENDA SIMPLIFICADA ---
+    # --- 4. LEYENDA (SIMPLIFICADA) ---
     st.markdown("""
         <div style="text-align: center; border: 1px solid #ddd; padding: 15px; border-radius: 10px;">
             <span style="color: #28a745; font-size: 1.5rem;">●</span> <b>Pagado</b> &nbsp;&nbsp;
