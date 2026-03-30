@@ -5,15 +5,16 @@ import matplotlib.pyplot as plt
 import urllib.parse
 import time
 
-# --- 1. CONFIGURACIÓN ---
+# --- 1. CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Rifa Los Güeros", layout="centered", page_icon="🎟️")
 
+# ID de tu Google Sheets
 ID_ARCHIVO = "1lJKiR8B8_DbhTFVXXxdVoexMZ6pS3y6w"
 URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_ARCHIVO}/export?format=xlsx&t={int(time.time())}'
 
 @st.cache_data(ttl=2)
 def cargar_datos(url):
-    # Lee desde la fila 3 (skiprows=2) donde están tus encabezados
+    # Lee desde la fila 3 (skiprows=2) para encontrar los encabezados
     df = pd.read_excel(url, sheet_name="Registro", skiprows=2, engine='openpyxl')
     return df
 
@@ -24,24 +25,21 @@ try:
     N = 100 
     info_boletos = {}
     
-    # --- 2. LÓGICA DE PINTADO (CORRECCIÓN PARA DECIMALES Y COMAS) ---
+    # --- 2. LÓGICA DE PINTADO (COLUMNA D Y F) ---
     for _, row in df.iterrows():
         try:
-            # Columna D (índice 3): Numero seleccionado | Columna F (índice 5): Estatus
+            # Columna D (Índice 3): Numero seleccionado | Columna F (Índice 5): Estatus
             celda_nums = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
             val_estatus = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
 
             if celda_nums and celda_nums.lower() != 'nan':
-                # Separamos por comas (ej: "2.0, 4.0")
+                # Dividimos por coma la cadena de números
                 partes = celda_nums.split(',')
                 for p in partes:
-                    # LIMPIEZA CLAVE: quitamos el ".0" si existe y espacios
+                    # Limpiamos espacios y posibles decimales accidentales del Excel (.0)
                     p_limpia = p.strip().split('.')[0]
-                    # Solo nos quedamos con los números
-                    num_solo = "".join(filter(str.isdigit, p_limpia))
-                    
-                    if num_solo:
-                        num_id = int(num_solo)
+                    if p_limpia.isdigit():
+                        num_id = int(p_limpia)
                         if 1 <= num_id <= N:
                             info_boletos[num_id] = val_estatus
         except:
@@ -58,6 +56,7 @@ try:
         
         estado = info_boletos.get(i, "")
         
+        # Comparación de estatus flexible (insensible a mayúsculas)
         if "pagado" in estado:
             color, txt_c = '#28a745', 'white' # VERDE
         elif "pendiente" in estado:
