@@ -75,7 +75,7 @@ try:
             <br><br>
             <h3 style="margin:0; color: #ffffff;">Precio del boleto: $170</h3>
             <p style="font-size: 0.85rem; color: #888; margin-top: 5px;">
-                ⌛ El mapa se tarda en actualizarse unos minutos
+                ⌛ El mapa se tarda en actualizarse unos minutos ⌛
             </p>
         </div>
     """, unsafe_allow_html=True)
@@ -92,7 +92,7 @@ try:
         st.write("") 
         st.link_button("Apartar por WhatsApp 📱", link_wa, use_container_width=True)
 
-    st.success("### 📸 ¡MANDA TU COMPROBANTE! ✨")
+    st.success("### 📸 RECUERDA EN EL CONCEPTO PONER TU NOMBRE COMPLETO ✨")
 
 except Exception as e:
     st.error(f"Error: {e}")
