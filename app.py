@@ -6,15 +6,22 @@ import time
 # --- 1. CONFIGURACIÓN ---
 st.set_page_config(page_title="Rifa Los Güeros", layout="wide")
 
-# CSS para que los boletos se vean grandes y bien definidos en el celular
+# CSS REFORZADO: Forzamos colores oscuros incluso en Light Mode
 st.markdown("""
     <style>
+    /* Contenedor principal con fondo oscuro forzado */
+    .ticket-grid-bg {
+        background-color: #0e1117;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
     .ticket-container {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
-        gap: 5px;
-        padding: 10px;
+        gap: 6px;
     }
+    /* Estilo base de los boletos */
     .ticket {
         aspect-ratio: 1 / 1;
         display: flex;
@@ -23,12 +30,20 @@ st.markdown("""
         border-radius: 5px;
         font-weight: bold;
         font-size: 14px;
-        border: 1px solid #444;
-        color: white;
+        color: white !important; /* Texto siempre blanco */
+        border: 1px solid #444 !important; /* Borde siempre visible */
+        background-color: #1a1c23; /* Fondo gris muy oscuro para 'Disponibles' */
     }
-    .pagado { background-color: #28a745 !important; border-color: #1e7e34; }
-    .pendiente { background-color: #ffc107 !important; color: black !important; border-color: #d39e00; }
-    .disponible { background-color: transparent; border: 1px solid #555; }
+    /* Colores de estado con prioridad máxima */
+    .pagado { 
+        background-color: #28a745 !important; 
+        border-color: #1e7e34 !important; 
+    }
+    .pendiente { 
+        background-color: #ffc107 !important; 
+        color: black !important; /* Texto negro para que resalte en amarillo */
+        border-color: #d39e00 !important; 
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -48,7 +63,6 @@ try:
     FIN = 1000
     info_boletos = {}
     
-    # --- PROCESAMIENTO DE DATOS ---
     for index, row in df_raw.iterrows():
         try:
             val_nums = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
@@ -66,13 +80,13 @@ try:
         except:
             continue
 
-    # --- 2. MAPA INTERACTIVO Y GRANDE ---
-    # Creamos el contenedor de la cuadrícula
-    ticket_html = '<div class="ticket-container">'
+    # --- 2. MAPA INDEPENDIENTE DEL TEMA ---
+    # Envolvemos todo en un div con clase 'ticket-grid-bg' para asegurar el fondo oscuro
+    ticket_html = '<div class="ticket-grid-bg"><div class="ticket-container">'
     
     for i in range(INICIO, FIN + 1):
         est = info_boletos.get(i, "")
-        clase = "disponible"
+        clase = ""
         if 'pagado' in est:
             clase = "pagado"
         elif 'pendiente' in est:
@@ -80,14 +94,13 @@ try:
             
         ticket_html += f'<div class="ticket {clase}">{i}</div>'
     
-    ticket_html += '</div>'
+    ticket_html += '</div></div>'
     
-    # Renderizar el mapa
     st.markdown(ticket_html, unsafe_allow_html=True)
 
-    # --- 3. LEYENDA Y PRECIO ---
+    # --- 3. LEYENDA Y PAGOS ---
     st.markdown(f"""
-        <div style="text-align: center; border: 1px solid #444; padding: 15px; border-radius: 10px; background-color: #121212; margin-top: 20px;">
+        <div style="text-align: center; border: 1px solid #444; padding: 15px; border-radius: 10px; background-color: #121212; color: white;">
             <span style="color: #28a745; font-size: 1.2rem;">●</span> <b>Pagado</b> &nbsp;&nbsp;
             <span style="color: #ffc107; font-size: 1.2rem;">●</span> <b>Pendiente</b> &nbsp;&nbsp;
             <span style="color: #ffffff; font-size: 1.2rem;">○</span> <b>Disponible</b>
@@ -99,7 +112,6 @@ try:
         </div>
     """, unsafe_allow_html=True)
 
-    # --- 4. BOTONES ---
     msg_wa = "Hola Rifas los gueros! Ya realice mi pago. Aquí te mando mi comprobante."
     link_wa = f"https://wa.me/5542006418?text={msg_wa.replace(' ', '%20')}"
 
