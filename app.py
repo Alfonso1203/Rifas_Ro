@@ -55,12 +55,12 @@ def cargar_datos():
     df = pd.read_excel(URL_DRIVE, sheet_name="Registro", engine='openpyxl')
     return df
 
-st.markdown("<h1 style='text-align: center;'>🎟️ BOLETOS RIFA 10/04/2026 🎟️</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>🎟️ BOLETOS RIFA 1/04/2026 🎟️</h1>", unsafe_allow_html=True)
 
 try:
     df_raw = cargar_datos()
     INICIO = 100
-    FIN = 1000
+    FIN = 999
     info_boletos = {}
     
     for index, row in df_raw.iterrows():
