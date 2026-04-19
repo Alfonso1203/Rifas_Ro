@@ -55,7 +55,7 @@ def cargar_datos():
     df = pd.read_excel(URL_DRIVE, sheet_name="Registro", engine='openpyxl')
     return df
 
-st.markdown("<h1 style='text-align: center;'>🎟️ BOLETOS RIFA 17/04/2026 🎟️</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>🎟️ BOLETOS RIFA 21/04/2026 🎟️</h1>", unsafe_allow_html=True)
 
 try:
     df_raw = cargar_datos()
