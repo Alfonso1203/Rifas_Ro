@@ -43,7 +43,6 @@ URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_ARCHIVO}/export?format=
 
 @st.cache_data(ttl=2)
 def cargar_datos():
-    # Lee la hoja "Registro" de tu archivo de Google Sheets
     df = pd.read_excel(URL_DRIVE, sheet_name="Registro", engine='openpyxl')
     return df
 
@@ -58,25 +57,22 @@ try:
     # --- 3. LÓGICA PARA PINTAR LOS BOLETOS ---
     for index, row in df_raw.iterrows():
         try:
-            # Columna D (índice 3): Números seleccionados | Columna F (índice 5): Estatus
             val_nums = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
             val_estatus = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
             
             if val_nums and val_nums.lower() not in ['nan', 'numero seleccionado']:
-                # Reemplaza puntos por comas para procesar listas como "1.2.3" o "1,2,3"
                 lista_n = val_nums.replace('.', ',').split(',')
                 for n in lista_n:
                     n_limpio = n.strip()
                     if n_limpio.isdigit():
                         num_int = int(n_limpio)
                         if INICIO <= num_int <= FIN:
-                            # Si ya está pagado, no se sobreescribe con pendiente
                             if info_boletos.get(num_int) != "pagado":
                                 info_boletos[num_int] = val_estatus
         except:
             continue
 
-    # --- 4. GENERACIÓN DEL MAPA RESPONSIVO ---
+    # --- 4. GENERACIÓN DEL MAPA ---
     ticket_html = '<div class="ticket-grid-bg"><div class="ticket-container">'
     for i in range(INICIO, FIN + 1):
         est = info_boletos.get(i, "")
@@ -87,10 +83,9 @@ try:
             clase = "pendiente"
         ticket_html += f'<div class="ticket {clase}">{i}</div>'
     ticket_html += '</div></div>'
-    
     st.markdown(ticket_html, unsafe_allow_html=True)
 
-    # --- 5. LEYENDA Y BOTONES ---
+    # --- 5. LEYENDA Y PRECIO ---
     st.markdown("""
         <div style="text-align: center; border: 1px solid #444; padding: 15px; border-radius: 10px; background-color: #121212; color: white;">
             <span style="color: #28a745;">●</span> <b>Pagado</b> &nbsp;&nbsp;
@@ -98,9 +93,11 @@ try:
             <span style="color: #ffffff;">○</span> <b>Disponible</b>
             <br><br>
             <h3 style="margin:0;">Precio del boleto: $170</h3>
+            <p style="color: #bbbbbb; font-size: 0.9em; margin-top: 10px;">El mapa se tarda unos minutos en actualizarse</p>
         </div>
     """, unsafe_allow_html=True)
 
+    # --- 6. DATOS DE PAGO Y BOTÓN ---
     link_wa = "https://wa.me/5542006418?text=Hola%20Rifas%20los%20gueros!%20Ya%20realice%20mi%20pago."
     st.write("")
     col1, col2 = st.columns(2)
