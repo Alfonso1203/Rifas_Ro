@@ -3,10 +3,10 @@ import pandas as pd
 import numpy as np
 import time
 
-# --- 1. CONFIGURACIÓN ---
+# --- 1. CONFIGURACIÓN VISUAL ---
 st.set_page_config(page_title="Rifa Los Güeros", layout="wide")
 
-# CSS REFORZADO: Forzamos colores oscuros y diseño adaptable
+# CSS para asegurar que el mapa sea legible en cualquier modo (Light/Dark)
 st.markdown("""
     <style>
     .ticket-grid-bg {
@@ -37,11 +37,13 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
+# --- 2. CONEXIÓN CON TU EXCEL ---
 ID_ARCHIVO = "1lJKiR8B8_DbhTFVXXxdVoexMZ6pS3y6w"
 URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_ARCHIVO}/export?format=xlsx&t={int(time.time())}'
 
 @st.cache_data(ttl=2)
 def cargar_datos():
+    # Lee la hoja "Registro" de tu archivo de Google Sheets
     df = pd.read_excel(URL_DRIVE, sheet_name="Registro", engine='openpyxl')
     return df
 
@@ -49,30 +51,32 @@ st.markdown("<h1 style='text-align: center;'>🎟️ BOLETOS RIFA 24/04/2026 �
 
 try:
     df_raw = cargar_datos()
-    # --- CAMBIO DE RANGO AQUÍ ---
     INICIO = 1
     FIN = 100
     info_boletos = {}
     
+    # --- 3. LÓGICA PARA PINTAR LOS BOLETOS ---
     for index, row in df_raw.iterrows():
         try:
+            # Columna D (índice 3): Números seleccionados | Columna F (índice 5): Estatus
             val_nums = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
             val_estatus = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
             
             if val_nums and val_nums.lower() not in ['nan', 'numero seleccionado']:
-                # Soporta separación por puntos o comas según tu Excel
+                # Reemplaza puntos por comas para procesar listas como "1.2.3" o "1,2,3"
                 lista_n = val_nums.replace('.', ',').split(',')
                 for n in lista_n:
-                    n_limpio = n.strip().split('.')[0]
+                    n_limpio = n.strip()
                     if n_limpio.isdigit():
                         num_int = int(n_limpio)
                         if INICIO <= num_int <= FIN:
+                            # Si ya está pagado, no se sobreescribe con pendiente
                             if info_boletos.get(num_int) != "pagado":
                                 info_boletos[num_int] = val_estatus
         except:
             continue
 
-    # --- 2. GENERACIÓN DEL MAPA ---
+    # --- 4. GENERACIÓN DEL MAPA RESPONSIVO ---
     ticket_html = '<div class="ticket-grid-bg"><div class="ticket-container">'
     for i in range(INICIO, FIN + 1):
         est = info_boletos.get(i, "")
@@ -86,7 +90,7 @@ try:
     
     st.markdown(ticket_html, unsafe_allow_html=True)
 
-    # --- 3. LEYENDA Y PAGOS ---
+    # --- 5. LEYENDA Y BOTONES ---
     st.markdown("""
         <div style="text-align: center; border: 1px solid #444; padding: 15px; border-radius: 10px; background-color: #121212; color: white;">
             <span style="color: #28a745;">●</span> <b>Pagado</b> &nbsp;&nbsp;
@@ -97,15 +101,16 @@ try:
         </div>
     """, unsafe_allow_html=True)
 
-    # Datos de contacto y pago
     link_wa = "https://wa.me/5542006418?text=Hola%20Rifas%20los%20gueros!%20Ya%20realice%20mi%20pago."
     st.write("")
     col1, col2 = st.columns(2)
     with col1:
-        st.info("**🏦 DATOS DE PAGO:**\n- BBVA\n- Cuenta: 012180015808888961\n- Israel Sámano")
+        st.info("**🏦 DATOS DE PAGO:**\n- Banamex\n- Cuenta: 002180702288920746\n- Rodrigo Antimo Mora")
     with col2:
         st.write("") 
         st.link_button("Apartar por WhatsApp 📱", link_wa, use_container_width=True)
 
+    st.success("### 📸 ¡MANDA TU COMPROBANTE! ✨")
+
 except Exception as e:
-    st.error(f"Error: {e}")
+    st.error(f"Error al cargar el mapa: {e}")
