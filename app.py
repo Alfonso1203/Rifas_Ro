@@ -92,7 +92,7 @@ try:
             <span style="color: #ffc107;">●</span> <b>Pendiente</b> &nbsp;&nbsp;
             <span style="color: #ffffff;">○</span> <b>Disponible</b>
             <br><br>
-            <h3 style="margin:0;">Precio del boleto: $170</h3>
+            <h3 style="margin:0;">Precio del boleto: $195</h3>
             <p style="color: #bbbbbb; font-size: 0.9em; margin-top: 10px;">⌛ El mapa se tarda unos minutos en actualizarse ⌛</p>
         </div>
     """, unsafe_allow_html=True)
