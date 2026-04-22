@@ -93,21 +93,21 @@ try:
             <span style="color: #ffffff;">○</span> <b>Disponible</b>
             <br><br>
             <h3 style="margin:0;">Precio del boleto: $170</h3>
-            <p style="color: #bbbbbb; font-size: 0.9em; margin-top: 10px;">El mapa se tarda unos minutos en actualizarse</p>
+            <p style="color: #bbbbbb; font-size: 0.9em; margin-top: 10px;">⌛ El mapa se tarda unos minutos en actualizarse ⌛</p>
         </div>
     """, unsafe_allow_html=True)
 
-    # --- 6. DATOS DE PAGO Y BOTÓN ---
+    # --- 6. DATOS DE PAGO ACTUALIZADOS Y BOTÓN ---
     link_wa = "https://wa.me/5542006418?text=Hola%20Rifas%20los%20gueros!%20Ya%20realice%20mi%20pago."
     st.write("")
     col1, col2 = st.columns(2)
     with col1:
-        st.info("**🏦 DATOS DE PAGO:**\n- Banamex\n- Cuenta: 002180702288920746\n- Rodrigo Antimo Mora")
+        st.info("**🏦 DATOS DE PAGO:**\n- Bbva\n- Cuenta clave: 012 180 01580888896 1\n- Israel Sámano")
     with col2:
         st.write("") 
         st.link_button("Apartar por WhatsApp 📱", link_wa, use_container_width=True)
 
-    st.success("### 📸 ¡MANDA TU COMPROBANTE! ✨")
+    st.success("### 📸 Recuerda poner tu nombre completo en el concepto del comprobante ✨")
 
 except Exception as e:
     st.error(f"Error al cargar el mapa: {e}")
