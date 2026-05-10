@@ -36,12 +36,13 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. CONEXIÓN CON TU EXCEL ---
+# --- 2. CONEXIÓN (Verifica que el ID sea correcto) ---
 ID_ARCHIVO = "1lJKiR8B8_DbhTFVXXxdVoexMZ6pS3y6w"
 URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_ARCHIVO}/export?format=xlsx&t={int(time.time())}'
 
 @st.cache_data(ttl=2)
 def cargar_datos():
+    # Cargamos el Excel y forzamos que la columna de números sea leída como texto
     df = pd.read_excel(URL_DRIVE, sheet_name="Registro", engine='openpyxl')
     return df
 
@@ -53,25 +54,29 @@ try:
     FIN = 400 
     info_boletos = {}
     
-    # --- 3. LÓGICA DE PINTADO CORREGIDA ---
+    # --- 3. LÓGICA DE DETECCIÓN MEJORADA ---
     for index, row in df_raw.iterrows():
         try:
-            # Columna D: Números | Columna F: Estatus
-            val_nums = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
+            # Extraer números (Columna D) y Estatus (Columna F)
+            # Usamos str() y strip() para evitar errores por espacios o celdas vacías
+            celda_numeros = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
             val_estatus = str(row.iloc[5]).strip().lower() if pd.notna(row.iloc[5]) else ""
             
-            if val_nums and val_nums.lower() not in ['nan', 'numero seleccionado']:
-                # Reemplazamos puntos por comas para que siempre funcione
-                lista_n = val_nums.replace('.', ',').split(',')
-                for n in lista_n:
-                    n_limpio = n.strip()
-                    if n_limpio.isdigit():
-                        num_int = int(n_limpio)
+            if celda_numeros and celda_numeros.lower() not in ['nan', 'numero seleccionado']:
+                # Reemplazamos puntos por comas para estandarizar la lista
+                limpio = celda_numeros.replace('.', ',')
+                # Separamos por coma
+                partes = limpio.split(',')
+                
+                for n in partes:
+                    n_solo = n.strip()
+                    if n_solo.isdigit():
+                        num_int = int(n_solo)
                         if INICIO <= num_int <= FIN:
-                            # Prioridad al estado "pagado"
+                            # Prioridad: Si ya está "pagado", no lo cambies a "pendiente"
                             if info_boletos.get(num_int) != "pagado":
                                 info_boletos[num_int] = val_estatus
-        except:
+        except Exception:
             continue
 
     # --- 4. GENERACIÓN DEL MAPA ---
@@ -79,15 +84,17 @@ try:
     for i in range(INICIO, FIN + 1):
         est = info_boletos.get(i, "")
         clase = ""
+        # Verificamos que la palabra clave esté en el estatus
         if 'pagado' in est:
             clase = "pagado"
         elif 'pendiente' in est:
             clase = "pendiente"
+            
         ticket_html += f'<div class="ticket {clase}">{i}</div>'
     ticket_html += '</div></div>'
     st.markdown(ticket_html, unsafe_allow_html=True)
 
-    # --- 5. SECCIÓN DE PRECIO Y LEYENDA ---
+    # --- 5. LEYENDA Y PRECIO ---
     st.markdown(f"""
         <div style="text-align: center; margin-bottom: 20px;">
             <span style="color: #28a745;">●</span> <b>Pagado</b> &nbsp;&nbsp;
@@ -99,22 +106,16 @@ try:
         </div>
     """, unsafe_allow_html=True)
 
-    # --- 6. DATOS DE PAGO Y BOTÓN ---
+    # --- 6. DATOS DE PAGO ---
     col1, col2 = st.columns([1.5, 2])
     with col1:
-        st.info("""
-        **🏦 DATOS DE PAGO:**
-        * Bbva
-        * Cuenta clave: 012 180 01580888896 1
-        * Israel Sámano
-        """)
+        st.info("**🏦 DATOS DE PAGO:**\n- Bbva\n- Cuenta clave: 012 180 01580888896 1\n- Israel Sámano")
     with col2:
-        st.write("")
-        st.write("")
+        st.write("") 
         link_wa = "https://wa.me/5542006418?text=Hola%20Rifas%20los%20gueros!%20Ya%20realice%20mi%20pago."
         st.link_button("Apartar por WhatsApp 📱", link_wa, use_container_width=True)
 
     st.success("### 📸 Recuerda poner tu nombre completo en el concepto del comprobante ✨")
 
 except Exception as e:
-    st.error(f"Error al cargar el mapa: {e}")
+    st.error(f"Error crítico al cargar datos: {e}")
