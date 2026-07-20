@@ -46,7 +46,7 @@ def cargar_datos():
     return df
 
 # Título con la nueva fecha: 26/06/2026
-st.markdown("<h1 style='text-align: center;'>🎟️ BOLETOS RIFA 26/06/2026 🎟️</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>🎟️ BOLETOS RIFA 31/07/2026 🎟️</h1>", unsafe_allow_html=True)
 
 try:
     df_raw = cargar_datos()
@@ -92,7 +92,7 @@ try:
             <span style="color: #ffc107;">●</span> <b>Pendiente</b> &nbsp;&nbsp;
             <span style="color: #ffffff;">○</span> <b>Disponible</b>
             <br><br>
-            <h1 style="margin:0; font-size: 2.5rem;">Precio del boleto: $120</h1>
+            <h1 style="margin:0; font-size: 2.5rem;">Precio del boleto: $55</h1>
             <p style="color: #bbbbbb; font-size: 1rem; margin-top: 10px;">⌛ El mapa se tarda unos minutos en actualizarse ⌛</p>
         </div>
     """, unsafe_allow_html=True)
