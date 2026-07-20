@@ -33,6 +33,23 @@ st.markdown("""
     }
     .pagado { background-color: #28a745 !important; border-color: #1e7e34 !important; }
     .pendiente { background-color: #ffc107 !important; color: black !important; border-color: #d39e00 !important; }
+    
+    /* Estilos para el cuadro de premios */
+    .prizes-container {
+        background-color: #12151c;
+        border: 1px solid #333;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 25px;
+        text-align: center;
+    }
+    .prize-card {
+        background-color: #1a1c23;
+        border: 1px solid #444;
+        border-radius: 8px;
+        padding: 15px;
+        margin: 5px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -45,8 +62,29 @@ def cargar_datos():
     df = pd.read_excel(URL_DRIVE, sheet_name="Registro", engine='openpyxl')
     return df
 
-# Título con la nueva fecha: 26/06/2026
+# Título con la fecha
 st.markdown("<h1 style='text-align: center;'>🎟️ BOLETOS RIFA 31/07/2026 🎟️</h1>", unsafe_allow_html=True)
+
+# --- 3. SECCIÓN DE PREMIOS ---
+st.markdown("""
+    <div class="prizes-container">
+        <h2 style='margin-top: 0; color: #ffc107;'>🏆 PREMIOS 🏆</h2>
+        <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px;">
+            <div class="prize-card" style="flex: 1; min-width: 200px; border-color: #ffd700;">
+                <h3 style="margin: 0; color: #ffd700;">🥇 1° Lugar</h3>
+                <h2 style="margin: 10px 0 0 0; color: #ffffff;">$6,000</h2>
+            </div>
+            <div class="prize-card" style="flex: 1; min-width: 200px; border-color: #c0c0c0;">
+                <h3 style="margin: 0; color: #c0c0c0;">🥈 2° Lugar</h3>
+                <h3 style="margin: 10px 0 0 0; color: #ffffff;">ZTE Blade V70 Max</h3>
+            </div>
+            <div class="prize-card" style="flex: 1; min-width: 200px; border-color: #cd7f32;">
+                <h3 style="margin: 0; color: #cd7f32;">🥉 3° Lugar</h3>
+                <h2 style="margin: 10px 0 0 0; color: #ffffff;">$500</h2>
+            </div>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
 try:
     df_raw = cargar_datos()
@@ -54,7 +92,7 @@ try:
     FIN = 300 # Ajustado a 300 boletos
     info_boletos = {}
     
-    # --- 3. LÓGICA DE PINTADO CON SEPARADOR ";" ---
+    # --- 4. LÓGICA DE PINTADO CON SEPARADOR ";" ---
     for index, row in df_raw.iterrows():
         try:
             val_nums = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
@@ -72,7 +110,7 @@ try:
         except:
             continue
 
-    # --- 4. GENERACIÓN DEL MAPA ---
+    # --- 5. GENERACIÓN DEL MAPA ---
     ticket_html = '<div class="ticket-grid-bg"><div class="ticket-container">'
     for i in range(INICIO, FIN + 1):
         est = info_boletos.get(i, "")
@@ -85,7 +123,7 @@ try:
     ticket_html += '</div></div>'
     st.markdown(ticket_html, unsafe_allow_html=True)
 
-    # --- 5. SECCIÓN DE PRECIO Y LEYENDA (Actualizado a $120) ---
+    # --- 6. SECCIÓN DE PRECIO Y LEYENDA ---
     st.markdown(f"""
         <div style="text-align: center; margin-bottom: 20px;">
             <span style="color: #28a745;">●</span> <b>Pagado</b> &nbsp;&nbsp;
@@ -97,7 +135,7 @@ try:
         </div>
     """, unsafe_allow_html=True)
 
-    # --- 6. DATOS DE PAGO Y BOTÓN ---
+    # --- 7. DATOS DE PAGO Y BOTÓN ---
     col1, col2 = st.columns([1.5, 2])
     with col1:
         st.info("""
