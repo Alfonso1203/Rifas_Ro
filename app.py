@@ -34,21 +34,22 @@ st.markdown("""
     .pagado { background-color: #28a745 !important; border-color: #1e7e34 !important; }
     .pendiente { background-color: #ffc107 !important; color: black !important; border-color: #d39e00 !important; }
     
-    /* Estilos para el cuadro de premios */
+    /* Estilos ajustados para un cuadro de premios MÁS PEQUEÑO */
     .prizes-container {
         background-color: #12151c;
         border: 1px solid #333;
         border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 25px;
+        padding: 10px 15px;
+        margin: 0 auto 20px auto;
+        max-width: 800px; /* Limita el ancho máximo para que se vea compacto */
         text-align: center;
     }
     .prize-card {
         background-color: #1a1c23;
         border: 1px solid #444;
-        border-radius: 8px;
-        padding: 15px;
-        margin: 5px;
+        border-radius: 6px;
+        padding: 8px 10px;
+        margin: 3px;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -65,22 +66,22 @@ def cargar_datos():
 # Título con la fecha
 st.markdown("<h1 style='text-align: center;'>🎟️ BOLETOS RIFA 31/07/2026 🎟️</h1>", unsafe_allow_html=True)
 
-# --- 3. SECCIÓN DE PREMIOS ---
+# --- 3. SECCIÓN DE PREMIOS (COMPACTA) ---
 st.markdown("""
     <div class="prizes-container">
-        <h2 style='margin-top: 0; color: #ffc107;'>🏆 PREMIOS 🏆</h2>
-        <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px;">
-            <div class="prize-card" style="flex: 1; min-width: 200px; border-color: #ffd700;">
-                <h3 style="margin: 0; color: #ffd700;">🥇 1° Lugar</h3>
-                <h2 style="margin: 10px 0 0 0; color: #ffffff;">$6,000</h2>
+        <h3 style='margin: 0 0 8px 0; color: #ffc107; font-size: 1.2rem;'>🏆 PREMIOS 🏆</h3>
+        <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 8px;">
+            <div class="prize-card" style="flex: 1; min-width: 150px; border-color: #ffd700;">
+                <span style="color: #ffd700; font-weight: bold; font-size: 0.9rem;">🥇 1° Lugar</span>
+                <h3 style="margin: 3px 0 0 0; color: #ffffff; font-size: 1.3rem;">$6,000</h3>
             </div>
-            <div class="prize-card" style="flex: 1; min-width: 200px; border-color: #c0c0c0;">
-                <h3 style="margin: 0; color: #c0c0c0;">🥈 2° Lugar</h3>
-                <h3 style="margin: 10px 0 0 0; color: #ffffff;">ZTE Blade V70 Max</h3>
+            <div class="prize-card" style="flex: 1; min-width: 150px; border-color: #c0c0c0;">
+                <span style="color: #c0c0c0; font-weight: bold; font-size: 0.9rem;">🥈 2° Lugar</span>
+                <h4 style="margin: 5px 0 0 0; color: #ffffff; font-size: 0.95rem;">ZTE Blade V70 Max</h4>
             </div>
-            <div class="prize-card" style="flex: 1; min-width: 200px; border-color: #cd7f32;">
-                <h3 style="margin: 0; color: #cd7f32;">🥉 3° Lugar</h3>
-                <h2 style="margin: 10px 0 0 0; color: #ffffff;">$500</h2>
+            <div class="prize-card" style="flex: 1; min-width: 150px; border-color: #cd7f32;">
+                <span style="color: #cd7f32; font-weight: bold; font-size: 0.9rem;">🥉 3° Lugar</span>
+                <h3 style="margin: 3px 0 0 0; color: #ffffff; font-size: 1.3rem;">$500</h3>
             </div>
         </div>
     </div>
@@ -89,7 +90,7 @@ st.markdown("""
 try:
     df_raw = cargar_datos()
     INICIO = 1
-    FIN = 300 # Ajustado a 300 boletos
+    FIN = 300 # 300 boletos
     info_boletos = {}
     
     # --- 4. LÓGICA DE PINTADO CON SEPARADOR ";" ---
