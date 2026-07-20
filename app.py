@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import time
 
-# --- 1. CONFIGURACIÓN VISUAL ---
+# --- 1. CONFIGURACIÓN VISUAL Y ESTILOS ---
 st.set_page_config(page_title="Rifa Los Güeros", layout="wide")
 
 st.markdown("""
@@ -34,27 +34,27 @@ st.markdown("""
     .pagado { background-color: #28a745 !important; border-color: #1e7e34 !important; }
     .pendiente { background-color: #ffc107 !important; color: black !important; border-color: #d39e00 !important; }
     
-    /* Estilos ajustados para un cuadro de premios MÁS PEQUEÑO */
+    /* Estilos del cuadro de premios */
     .prizes-container {
         background-color: #12151c;
         border: 1px solid #333;
         border-radius: 10px;
-        padding: 10px 15px;
-        margin: 0 auto 20px auto;
-        max-width: 800px; /* Limita el ancho máximo para que se vea compacto */
+        padding: 15px;
+        margin: 20px auto;
+        max-width: 800px;
         text-align: center;
     }
     .prize-card {
         background-color: #1a1c23;
         border: 1px solid #444;
         border-radius: 6px;
-        padding: 8px 10px;
+        padding: 10px;
         margin: 3px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 2. CONEXIÓN CON TU EXCEL ---
+# --- 2. CONEXIÓN CON EXCEL ---
 ID_ARCHIVO = "1lJKiR8B8_DbhTFVXXxdVoexMZ6pS3y6w"
 URL_DRIVE = f'https://docs.google.com/spreadsheets/d/{ID_ARCHIVO}/export?format=xlsx&t={int(time.time())}'
 
@@ -63,27 +63,19 @@ def cargar_datos():
     df = pd.read_excel(URL_DRIVE, sheet_name="Registro", engine='openpyxl')
     return df
 
-# Título con la fecha
+# --- A. TÍTULO Y FECHA ---
 st.markdown("<h1 style='text-align: center;'>🎟️ BOLETOS RIFA 31/07/2026 🎟️</h1>", unsafe_allow_html=True)
 
-# --- 3. SECCIÓN DE PREMIOS (COMPACTA) ---
+# --- B. SECCIÓN DE PRECIO, LEYENDA Y AVISO (HASTA ARRIBA) ---
 st.markdown("""
-    <div class="prizes-container">
-        <h3 style='margin: 0 0 8px 0; color: #ffc107; font-size: 1.2rem;'>🏆 PREMIOS 🏆</h3>
-        <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 8px;">
-            <div class="prize-card" style="flex: 1; min-width: 150px; border-color: #ffd700;">
-                <span style="color: #ffd700; font-weight: bold; font-size: 0.9rem;">🥇 1° Lugar</span>
-                <h3 style="margin: 3px 0 0 0; color: #ffffff; font-size: 1.3rem;">$6,000</h3>
-            </div>
-            <div class="prize-card" style="flex: 1; min-width: 150px; border-color: #c0c0c0;">
-                <span style="color: #c0c0c0; font-weight: bold; font-size: 0.9rem;">🥈 2° Lugar</span>
-                <h4 style="margin: 5px 0 0 0; color: #ffffff; font-size: 0.95rem;">ZTE Blade V70 Max</h4>
-            </div>
-            <div class="prize-card" style="flex: 1; min-width: 150px; border-color: #cd7f32;">
-                <span style="color: #cd7f32; font-weight: bold; font-size: 0.9rem;">🥉 3° Lugar</span>
-                <h3 style="margin: 3px 0 0 0; color: #ffffff; font-size: 1.3rem;">$500</h3>
-            </div>
+    <div style="text-align: center; margin-bottom: 25px;">
+        <h1 style="margin:0 0 10px 0; font-size: 2.5rem;">Precio del boleto: $55</h1>
+        <div style="font-size: 1.1rem;">
+            <span style="color: #28a745;">●</span> <b>Pagado</b> &nbsp;&nbsp;&nbsp;&nbsp;
+            <span style="color: #ffc107;">●</span> <b>Pendiente</b> &nbsp;&nbsp;&nbsp;&nbsp;
+            <span style="color: #ffffff;">○</span> <b>Disponible</b>
         </div>
+        <p style="color: #bbbbbb; font-size: 0.95rem; margin-top: 10px;">⌛ El mapa se tarda unos minutos en actualizarse ⌛</p>
     </div>
 """, unsafe_allow_html=True)
 
@@ -93,7 +85,7 @@ try:
     FIN = 300 # 300 boletos
     info_boletos = {}
     
-    # --- 4. LÓGICA DE PINTADO CON SEPARADOR ";" ---
+    # Lógica de lectura
     for index, row in df_raw.iterrows():
         try:
             val_nums = str(row.iloc[3]).strip() if pd.notna(row.iloc[3]) else ""
@@ -111,7 +103,7 @@ try:
         except:
             continue
 
-    # --- 5. GENERACIÓN DEL MAPA ---
+    # --- C. MAPA DE BOLETOS (EN EL CENTRO) ---
     ticket_html = '<div class="ticket-grid-bg"><div class="ticket-container">'
     for i in range(INICIO, FIN + 1):
         est = info_boletos.get(i, "")
@@ -122,21 +114,31 @@ try:
             clase = "pendiente"
         ticket_html += f'<div class="ticket {clase}">{i}</div>'
     ticket_html += '</div></div>'
+    
     st.markdown(ticket_html, unsafe_allow_html=True)
 
-    # --- 6. SECCIÓN DE PRECIO Y LEYENDA ---
-    st.markdown(f"""
-        <div style="text-align: center; margin-bottom: 20px;">
-            <span style="color: #28a745;">●</span> <b>Pagado</b> &nbsp;&nbsp;
-            <span style="color: #ffc107;">●</span> <b>Pendiente</b> &nbsp;&nbsp;
-            <span style="color: #ffffff;">○</span> <b>Disponible</b>
-            <br><br>
-            <h1 style="margin:0; font-size: 2.5rem;">Precio del boleto: $55</h1>
-            <p style="color: #bbbbbb; font-size: 1rem; margin-top: 10px;">⌛ El mapa se tarda unos minutos en actualizarse ⌛</p>
+    # --- D. CUADRO DE PREMIOS (ABAJO DEL MAPA) ---
+    st.markdown("""
+        <div class="prizes-container">
+            <h3 style='margin: 0 0 10px 0; color: #ffc107; font-size: 1.2rem;'>🏆 PREMIOS 🏆</h3>
+            <div style="display: flex; justify-content: space-around; flex-wrap: wrap; gap: 8px;">
+                <div class="prize-card" style="flex: 1; min-width: 150px; border-color: #ffd700;">
+                    <span style="color: #ffd700; font-weight: bold; font-size: 0.9rem;">🥇 1° Lugar</span>
+                    <h3 style="margin: 3px 0 0 0; color: #ffffff; font-size: 1.3rem;">$6,000</h3>
+                </div>
+                <div class="prize-card" style="flex: 1; min-width: 150px; border-color: #c0c0c0;">
+                    <span style="color: #c0c0c0; font-weight: bold; font-size: 0.9rem;">🥈 2° Lugar</span>
+                    <h4 style="margin: 5px 0 0 0; color: #ffffff; font-size: 0.95rem;">ZTE Blade V70 Max</h4>
+                </div>
+                <div class="prize-card" style="flex: 1; min-width: 150px; border-color: #cd7f32;">
+                    <span style="color: #cd7f32; font-weight: bold; font-size: 0.9rem;">🥉 3° Lugar</span>
+                    <h3 style="margin: 3px 0 0 0; color: #ffffff; font-size: 1.3rem;">$500</h3>
+                </div>
+            </div>
         </div>
     """, unsafe_allow_html=True)
 
-    # --- 7. DATOS DE PAGO Y BOTÓN ---
+    # --- E. DATOS DE PAGO Y BOTÓN ---
     col1, col2 = st.columns([1.5, 2])
     with col1:
         st.info("""
